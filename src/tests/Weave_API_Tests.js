@@ -119,7 +119,7 @@ Weave_API_Tests.prototype = (function () {
         /**
          * Exercise listing a collection.
          */
-        no_testListCollection: function (recordResults) {
+        testListCollection: function (recordResults) {
             var checked_collection = Weave.TestData.checked_collection;
                 chain = new Decafbad.Chain([], this);
             chain
