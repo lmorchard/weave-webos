@@ -1,0 +1,24 @@
+/**
+ * @fileOverview Weave app test data
+ * @author <a href="http://decafbad.com">l.m.orchard@pobox.com</a>
+ * @version 0.1
+ */
+/*jslint laxbreak: true */
+Weave.TestData = {
+
+    auth: {
+        username:   'YOUR_USERNAME',
+        password:   'YOUR_PASSWORD',
+        passphrase: 'YOUR_CRYPTO_PASSPHRASE'
+    },
+
+    expected_collections: [
+        "passwords", "keys", "clients", "crypto", "forms", "tabs", 
+        "meta", "bookmarks", "prefs", "history"
+    ],
+
+    checked_collection: "history",
+
+    EOF:null // I hate trailing comma errors
+
+};

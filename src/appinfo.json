@@ -1,0 +1,10 @@
+{
+	"id": "com.decafbad.weave",
+	"version": "0.0.1",
+	"vendor": "0xDECAFBAD",
+    "vendorurl":"http:\/\/decafbad.com\/",
+	"type": "web",
+	"main": "index.html",
+	"title": "Weave",
+	"icon": "icon.png"
+}
