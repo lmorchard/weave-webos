@@ -6,6 +6,14 @@ This is an attempt at a [Mozilla Weave][1] client for webOS
 
 [1]: http://labs.mozilla.com/projects/weave/
 
+Someday, I'd like it to do things such as:
+
+* Bring the Firefox Awesome Bar to webOS.
+* Access bookmarks / history / tabs from the desktop
+* Sync / store other random data (eg. contacts? notes?) from webOS apps.
+
+## How?
+
 Presently, it's all just tests.  To play, make a copy of 
 `src/javascripts/Weave/TestData.js-dist` as 
 `src/javascripts/Weave/TestData.js` and edit it to reflect

@@ -68,12 +68,7 @@ Weave.API.prototype = /** @lends Weave.API */ {
 
                 Mojo.Log.error("LOGGED IN %s", username);
 
-                // Now, perform some initial decrypting to get keys
-                on_progress(0.1);
-
-                chain.next();
-            })
-            .push(function (chain) {
+                // Generate symmetric key based on supplied passphrase.
                 Weave.Crypto.PKCS5_Chained.generate(
                     this.passphrase,
                     Weave.Util.Base64.decode(this.privkey.salt),
@@ -84,19 +79,22 @@ Weave.API.prototype = /** @lends Weave.API */ {
                 on_progress(0.3);
             })
             .push(function (chain, pkcs5_key) {
-                rsa_key = Weave.Util.Base64.decode(this.privkey.keyData);
-                rsa_iv = Weave.Util.Base64.decode(this.privkey.iv);
 
-                on_progress(0.5);
-                ursa_key = Weave.Crypto.AES.decrypt(pkcs5_key, rsa_iv, rsa_key);
-                on_progress(0.6);
+                // Decrypt the user's private key using the passphrase-based
+                // symmetric key.
+                ursa_key = Weave.Crypto.AES.decrypt(
+                    pkcs5_key, 
+                    Weave.Util.Base64.decode(this.privkey.iv),
+                    Weave.Util.Base64.decode(this.privkey.keyData)
+                );
+
+                // Parse for the key
                 tag = Weave.Crypto.ASN1.PKCS1.parse(ursa_key);
-                on_progress(0.7);
-
                 if (!tag) {
                     return chain.on_error("PASSPHRASE INCORRECT");
                 }
                 this.tag = tag;
+                on_progress(0.7);
 
                 this.rsa_key = new RSAKey();
                 this.rsa_key.setPrivateEx(
@@ -240,7 +238,7 @@ Weave.API.prototype = /** @lends Weave.API */ {
             .push(function (chain, enc_data) {
 
                 if ('undefined' == typeof enc_data.symkey) {
-                    // If the symmetrical key has not yet been decrypted, do so
+                    // If the symmetric key has not yet been decrypted, do so
                     // just this once and then cache for this encryption.
                     var key = enc_data.payload.keyring[this.pubkey_url];
                     var symkey = Weave.Util.intify(this.rsa_key.decrypt(
