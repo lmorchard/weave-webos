@@ -51,7 +51,7 @@ Weave_API_Tests.prototype = (function () {
         /**
          * Exercise Weave login sequence.
          */
-        no_testLogin: function (recordResults) {
+        testLogin: function (recordResults) {
             var chain = new Decafbad.Chain([], this);
             chain
                 .push("_performLogin")
@@ -66,7 +66,7 @@ Weave_API_Tests.prototype = (function () {
         /**
          * Exercise the acquisition of collection info
          */
-        no_testGetCollections: function (recordResults) {
+        testGetCollections: function (recordResults) {
             var chain = new Decafbad.Chain([], this);
             chain
                 .push("_performLogin")
@@ -147,7 +147,7 @@ Weave_API_Tests.prototype = (function () {
         },
 
         /**
-         *
+         * Exercise fetching individual items from a collection.
          */
         testGetFromCollection: function (recordResults) {
             var checked_collection = Weave.TestData.checked_collection,

@@ -8,4 +8,4 @@ This is an attempt at a [Mozilla Weave][1] client for webOS
 
 ## Who?
 
-* l.m.orchard <http://decafbad.com> <mailto:l.m.orchard@pobox.com>
+* l.m.orchard; <http://decafbad.com>; <mailto:l.m.orchard@pobox.com>
