@@ -56,7 +56,6 @@ Weave.Crypto.PKCS5 = function() {
 
     U[0] = _PRF(P, S + I.join(''));
     for (var j = 1; j < c; j++) {
-      Mojo.Log.error("PKCS 1.5.5 %s %s", j, c);
       U[j] = _PRF(P, U[j - 1]);
     }
 
