@@ -54,12 +54,12 @@ tests: $(TESTS_TARGETS)
 
 update: $(UPDATE_TARGETS)
 
-tail-log:
-	-palm-log -f -d $(DEVICE) $(APPID)
-
 #tail-log:
-#	echo '----------------------------------------'; echo; \
-#	echo 'tail -f /var/log/messages | grep $(APPID)' | novacom -d $(NOVACOM_ID) open tty://
+#	-palm-log -f -d $(DEVICE) $(APPID)
+
+tail-log:
+	echo '----------------------------------------'; echo; \
+	echo 'tail -f /var/log/messages | grep $(APPID)' | novacom -d $(NOVACOM_ID) open tty://
 
 kill:
 	-palm-launch -d $(DEVICE) -c $(APPID)
