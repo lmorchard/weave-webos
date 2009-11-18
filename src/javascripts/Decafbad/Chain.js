@@ -1,5 +1,5 @@
 /**
- * @fileOverview Provides the chain utility for continuation-passing.
+ * @fileOverview Provides a chain utility for continuation-passing.
  * @author <a href="http://decafbad.com">l.m.orchard@pobox.com</a>
  * @version 0.1
  *
@@ -22,11 +22,10 @@ Decafbad.Chain = Class.create(/** @lends Decafbad.Chain */{
         this.running  = null;
         this.actions  = actions.compact() || [];
         this.object   = object;
+
         this.on_error = on_error || function() {
             Mojo.Log.error("CHAIN ERROR: %j", $A(arguments));
         };
-
-        this.use_timeout = true;
 
         return this;
     },
@@ -40,62 +39,69 @@ Decafbad.Chain = Class.create(/** @lends Decafbad.Chain */{
     },
 
     /**
-     * Run the next function in the chain, either directly or via setTimeout
-     * depending the value of this.use_timeout.  Calls via setTimeout may
-     * introduce small delays, but yield control to the browser more often
-     * and prevent script interruptions and improve UI responsiveness.
+     * Signal an error, aborting the rest of the chain.
      */
-    next: function() {
-        var args = $A(arguments),
-            $this = this;
-        if (this.use_timeout) {
-            setTimeout(function () {
-                $this._next.apply($this, args);
-            }, 0);
-        } else {
-            return $this._next.apply($this, args);
-        }
+    error: function() {
+        var args = $A(arguments);
+
+        this.actions = [];
+
+        // Use a zero-timeout to escape the call stack and yield to OS.
+        setTimeout((function () {
+            if (this.object) {
+                this.on_error.apply(this.object, args);
+            } else {
+                this.on_error.apply(this, args);
+            }
+        }).bind(this), 0);
+
+        return this;
     },
 
     /** 
-     * Real method to run the next function in the chain.
+     * Run the next function in the chain.
      */
-    _next: function()  {
+    next: function()  {
 
         if (!this.actions.length) {
-            // Stop when we're out of actions.
+            // Stop when we're out of functiona.
             return false;
         }
 
         var action = this.actions.shift(),
             args = $A(arguments);
 
-        // Insert the chain object in front of the arguments for next(), all of
-        // which will be passed to the next chain step.
-        args.unshift(this);
+        // Use a zero-timeout to escape the call stack and yield to OS.
+        setTimeout((function () {
 
-        try {
-            if (typeof action == 'string') {
-                // Accept a method of the context object by name as string.
-                if (this.object && typeof this.object[action] == 'function') {
-                    this.object[action].apply(this.object, args);
-                } else {
-                    this.on_error('unknown method');
+            // Insert the chain object in front of the arguments for next(), all of
+            // which will be passed to the next chain step.
+            args.unshift(this);
+
+            try {
+                if (typeof action == 'string') {
+                    // Accept a method of the context object by name as string.
+                    if (this.object && typeof this.object[action] == 'function') {
+                        this.object[action].apply(this.object, args);
+                    } else {
+                        this.error('unknown method');
+                    }
+                } else if (typeof action == 'function') {
+                    // Accept a function, bind to the context object if supplied.
+                    if (this.object) {
+                        action.apply(this.object, args);
+                    } else {
+                        action.apply(this, args);
+                    }
                 }
-            } else if (typeof action == 'function') {
-                // Accept a function, bind to the context object if supplied.
-                if (this.object) {
-                    action.apply(this.object, args);
-                } else {
-                    action.apply(this, args);
+            } catch(e) {
+                if (typeof Mojo.Log.logException != 'undefined') {
+                    Mojo.Log.logException(e);
                 }
+                this.error(e);
             }
-        } catch(e) {
-            if (typeof Mojo.Log.logException != 'undefined') {
-                Mojo.Log.logException(e);
-            }
-            this.on_error(e);
-        }
+
+        }).bind(this), 0);
 
         return this;
     },
@@ -131,7 +137,7 @@ Decafbad.Chain = Class.create(/** @lends Decafbad.Chain */{
         var args  = $A(arguments),
             $this = this;
         return function () {
-            $this.on_error.apply($this, args.concat($A(arguments)));
+            $this.error.apply($this, args.concat($A(arguments)));
         };
     }
 
