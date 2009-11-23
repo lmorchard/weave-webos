@@ -1,7 +1,11 @@
 [
+    {"source": "javascripts/vendor/Math.uuid.js"},
+    {"source": "javascripts/vendor/date-iso8601.js"},
+    {"source": "javascripts/vendor/jsonpath-0.8.0.js"},
     {"source": "javascripts/Decafbad/Decafbad.js"},
     {"source": "javascripts/Decafbad/Utils.js"},
     {"source": "javascripts/Decafbad/Chain.js"},
+    {"source": "javascripts/Decafbad/Silo.js"},
     {"source": "javascripts/Weave/Weave.js"},
     {"source": "javascripts/Weave/util.js"},
     {"source": "javascripts/Weave/pkcs5v2.js"},
