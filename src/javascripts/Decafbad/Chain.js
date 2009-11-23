@@ -18,7 +18,12 @@ Decafbad.Chain = Class.create(/** @lends Decafbad.Chain */{
      * @param {array} action List of functions for chain
      * @param {object} object Object used as this scope in calls.
      */
-    initialize: function(actions, object, on_error) {
+    initialize: function(actions, object, on_error, options) {
+        
+        this.options = Object.extend({
+            use_timeouts: true
+        }, options || {});
+
         this.running  = null;
         this.actions  = actions.compact() || [];
         this.object   = object;
@@ -34,7 +39,13 @@ Decafbad.Chain = Class.create(/** @lends Decafbad.Chain */{
      * Push a new function onto the end of the chain.
      */
     push: function (fn) {
-        this.actions.push(fn);
+        if ('function' == typeof fn) {
+            this.actions.push(fn);
+        } else {
+            $A(fn).each(function (sub_fn) {
+                this.actions.push(sub_fn)
+            }, this);
+        }
         return this;
     },
 
@@ -46,14 +57,21 @@ Decafbad.Chain = Class.create(/** @lends Decafbad.Chain */{
 
         this.actions = [];
 
-        // Use a zero-timeout to escape the call stack and yield to OS.
-        setTimeout((function () {
+        var fn = (function () {
             if (this.object) {
                 this.on_error.apply(this.object, args);
             } else {
                 this.on_error.apply(this, args);
             }
-        }).bind(this), 0);
+        }).bind(this);
+        
+        if (this.options.use_timeouts) {
+            // Use a zero-timeout to escape the call stack and yield to OS.
+            setTimeout(fn, 0);
+        } else {
+            // Use a direct call.
+            fn();
+        }
 
         return this;
     },
@@ -72,7 +90,7 @@ Decafbad.Chain = Class.create(/** @lends Decafbad.Chain */{
             args = $A(arguments);
 
         // Use a zero-timeout to escape the call stack and yield to OS.
-        setTimeout((function () {
+        var fn = this.redo = (function () {
 
             // Insert the chain object in front of the arguments for next(), all of
             // which will be passed to the next chain step.
@@ -101,7 +119,15 @@ Decafbad.Chain = Class.create(/** @lends Decafbad.Chain */{
                 this.error(e);
             }
 
-        }).bind(this), 0);
+        }).bind(this);
+
+        if (this.options.use_timeouts) {
+            // Use a zero-timeout to escape the call stack and yield to OS.
+            setTimeout(fn, 0);
+        } else {
+            // Use a direct call.
+            fn();
+        }
 
         return this;
     },
