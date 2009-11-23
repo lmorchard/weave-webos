@@ -88,7 +88,7 @@ Decafbad.Silo = Class.create(/** @lends Decafbad.Silo */{
     /** Metadata table for all silos */
     meta_table_name: 'silo_meta',
     /** Object wrapper class for DB rows */
-    object_class: Decafbad.SiloObject,
+    row_class: Decafbad.SiloObject,
 
     /**
      * Databse table abstraction with object wrappers
@@ -113,7 +113,7 @@ Decafbad.Silo = Class.create(/** @lends Decafbad.Silo */{
      */
     open: function (on_success, on_failure) {
         var $this = this,
-            object_proto = this.object_class.prototype,
+            object_proto = this.row_class.prototype,
             chain = new Decafbad.Chain([], this, on_failure, {
                 use_timeouts: false
             });
@@ -227,7 +227,7 @@ Decafbad.Silo = Class.create(/** @lends Decafbad.Silo */{
      */
     query: function (partial_sql, vals, on_success, on_failure) {
         var $this = this,
-            blob_col = this.object_class.prototype.__blob_column,
+            blob_col = this.row_class.prototype.__blob_column,
             sql = [
                 'SELECT id, ' + blob_col,
                 'FROM ' + this.table_name,
@@ -268,7 +268,7 @@ Decafbad.Silo = Class.create(/** @lends Decafbad.Silo */{
      * @param {object} data Object data / DB row data
      */
     factory: function (data) {
-        return new this.object_class(this, data);
+        return new this.row_class(this, data);
     },
 
     /**
@@ -381,14 +381,14 @@ Decafbad.Silo = Class.create(/** @lends Decafbad.Silo */{
      */
     _createTable: function (tx, on_success, on_failure) {
         var $this = this,
-            table_columns = $H($this.object_class.prototype.__table_columns);
+            table_columns = $H($this.row_class.prototype.__table_columns);
             schema = [ 
                 "CREATE TABLE IF NOT EXISTS '" + $this.table_name + "' (", [
                     "'id' INTEGER PRIMARY KEY AUTOINCREMENT",
                     table_columns.keys().map(function (key) { 
                         return "'"+key+"' TEXT"; 
                     }),
-                    "'" + $this.object_class.prototype.__blob_column + "' BLOB"
+                    "'" + $this.row_class.prototype.__blob_column + "' BLOB"
                 ].join(', '),
                 ")"
             ].flatten().join(' ');
@@ -399,8 +399,8 @@ Decafbad.Silo = Class.create(/** @lends Decafbad.Silo */{
                 "('table_name', 'version', 'json') VALUES (?,?,?)",
                 [ 
                     $this.table_name, 
-                    $this.object_class.prototype.__version,
-                    $H($this.object_class.prototype).toJSON()
+                    $this.row_class.prototype.__version,
+                    $H($this.row_class.prototype).toJSON()
                 ],
                 function (tx) { on_success(tx); },
                 on_failure
@@ -432,7 +432,7 @@ Decafbad.Silo = Class.create(/** @lends Decafbad.Silo */{
      */
     _rsToObjects: function (rs) {
         var rows = rs.rows, objs = [], 
-            blob_col = this.object_class.prototype.__blob_column, 
+            blob_col = this.row_class.prototype.__blob_column, 
             i, l;
 
         for (i=0,l=rows.length; i<l; i++) {

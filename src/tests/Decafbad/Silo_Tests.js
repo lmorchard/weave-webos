@@ -42,25 +42,14 @@ Decafbad_Silo_Tests.prototype = (function () {
             'address':  'address',
             'created':  'created', 
             'modified': 'modified' 
-        }/*,
-
-        initialize: function ($super, silo, data) {
-            Mojo.log("TestSiloObject");
-            $super(silo, data);
         }
-        */
     });
 
     var TestSilo = Class.create(Decafbad.Silo, {
         db_name: 'tests',
         table_name: 'test_objects',
         meta_table_name: 'test_silo_meta',
-        object_class: TestSiloObject/*,
-        initialize: function ($super, options) {
-            Mojo.log("TestSilo");
-            $super(options);
-        }
-        */
+        row_class: TestSiloObject
     });
 
     return /** @lends Decafbad_Silo_Tests */ {
@@ -101,15 +90,14 @@ Decafbad_Silo_Tests.prototype = (function () {
                             function (tx, version) {
                                 Mojo.log("Table version = %s", version);
                                 Mojo.requireEqual(
-                                    TestSiloObject.prototype.__version, version,
-                                    "Table version should match proto #{a} / #{b}",
-                                    { a: version, b: TestSiloObject.prototype.version }
+                                    this.silo.row_class.prototype.__version, 
+                                    version
                                 );
                                 chain.next();
-                            }, 
+                            }.bind(this), 
                             chain.errorCallback()
                         );
-                    });
+                    }.bind(this));
                 },
                 function (chain) { recordResults(Mojo.Test.passed); }
             ]).next();
