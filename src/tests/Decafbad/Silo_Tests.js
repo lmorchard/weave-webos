@@ -13,6 +13,23 @@ Decafbad_Silo_Tests.timeoutInterval = 5000;
 
 Decafbad_Silo_Tests.prototype = (function () {
 
+    var TestSilo = Class.create(Decafbad.Silo, {
+        db_name: 'tests',
+        table_name: 'test_objects',
+        meta_table_name: 'test_silo_meta',
+        row_class: Class.create(Decafbad.SiloObject, {
+            __version: "1.0.1",
+            __table_columns: { 
+                'uuid':     'uuid', 
+                'name':     'name',
+                'age':      'age',
+                'address':  'address',
+                'created':  'created', 
+                'modified': 'modified' 
+            }
+        })
+    });
+
     var test_data = {
         cols: [ 'name', 'age', 'address', 'profession', 'pets' ],
         rows: [
@@ -31,25 +48,6 @@ Decafbad_Silo_Tests.prototype = (function () {
             obj[name] = row[idx];
         });
         return obj;
-    });
-
-    var TestSiloObject = Class.create(Decafbad.SiloObject, {
-        __version: "1.0.1",
-        __table_columns: { 
-            'uuid':     'uuid', 
-            'name':     'name',
-            'age':      'age',
-            'address':  'address',
-            'created':  'created', 
-            'modified': 'modified' 
-        }
-    });
-
-    var TestSilo = Class.create(Decafbad.Silo, {
-        db_name: 'tests',
-        table_name: 'test_objects',
-        meta_table_name: 'test_silo_meta',
-        row_class: TestSiloObject
     });
 
     return /** @lends Decafbad_Silo_Tests */ {
@@ -208,6 +206,7 @@ Decafbad_Silo_Tests.prototype = (function () {
 
             chain.push([
                 function (chain) {
+                    Mojo.log("Querying for age > 12");
                     this.silo.query(
                         [ 'WHERE age > ?' ], [12],
                         chain.nextCallback(), chain.errorCallback()
@@ -219,17 +218,21 @@ Decafbad_Silo_Tests.prototype = (function () {
                         Mojo.require(obj.age > 12);
                     });
 
+                    Mojo.log("Querying for name in set");
                     this.silo.query(
-                        [ 'WHERE name in (?,?)' ], ["Mike Smith", "John Brown"],
+                        [ 'WHERE name IN (?,?)'], 
+                        [ "Mike Brown esq.", "John Smith esq." ],
                         chain.nextCallback(), chain.errorCallback()
                     );
                 },
                 function (chain, result_objs) {
+                    Mojo.requireDefined(result_objs);
                     Mojo.requireEqual(2, result_objs.length);
                     result_objs.each(function (obj) {
+                        Mojo.log("Found name %s", obj.name);
                         Mojo.require(
-                            "Mike Smith" === obj.name ||
-                            "John Brown" === obj.name
+                            "Mike Brown esq." === obj.name ||
+                            "John Smith esq." === obj.name
                         );
                     });
                     chain.next();

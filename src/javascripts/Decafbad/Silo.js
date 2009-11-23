@@ -68,7 +68,7 @@ Decafbad.SiloObject = Class.create(/** @lends Decafbad.SiloObject */{
             this.created = (new Date()).getTime();
         }
         this.modified = (new Date()).getTime();
-        this.__silo.save(this, on_success, on_error);
+        this.__silo._save(this, on_success, on_error);
         return this;
     },
 
@@ -247,12 +247,12 @@ Decafbad.Silo = Class.create(/** @lends Decafbad.Silo */{
     _query: function (sql, vals, on_success, on_failure) {
         var sql_stmt = ('string' == typeof sql) ?
             sql : sql.flatten().join(' ');
+
         this.db.transaction(
             function (tx) {
                 tx.executeSql(
                     sql_stmt, vals,
                     function (tx, rs) {
-                        if (0 === rs.rows.length) { on_success(null); }
                         on_success(this._rsToObjects(rs));
                     }.bind(this),
                     on_failure
@@ -278,7 +278,7 @@ Decafbad.Silo = Class.create(/** @lends Decafbad.Silo */{
      * @param {function}            on_success Callback on success
      * @param {function}            on_failure Callback on failure
      */
-    save: function (obj, on_success, on_failure) {
+    _save: function (obj, on_success, on_failure) {
         var data = obj.toHash(), sql, cols = [], vals = [], is_insert;
 
         // Gather the table column values from object data.
