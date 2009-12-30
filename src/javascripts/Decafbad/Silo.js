@@ -6,26 +6,23 @@
 /*jslint laxbreak: true */
 /*global Mojo, Weave, Chain, Class, Ajax */
 
-Decafbad.SiloObject = Class.create(/** @lends Decafbad.SiloObject */{
+Decafbad.SiloObject = Class.create(Hash, /** @lends Decafbad.SiloObject */{
 
     /** Version of the object in the DB */
-    __version: 1,
-
-    /** DB row id */
-    __id: null,
+    version: 1,
 
     /** Parent source silo */
-     __silo: null,
+    silo: null,
 
     /** Map of table columns to indexed object properties */
-    __table_columns: { 
+    table_columns: { 
         'uuid':     'uuid', 
         'created':  'created', 
         'modified': 'modified' 
     },
 
     /** Name of the table column that receives the JSON blob */
-    __blob_column: 'json',
+    blob_column: 'json',
 
     /**
      * Object wrapper for DB rows
@@ -35,44 +32,27 @@ Decafbad.SiloObject = Class.create(/** @lends Decafbad.SiloObject */{
      * @param {Decafbad.Silo} silo Source silo for the row
      * @param {Object}        data DB row data / object data
      */
-    initialize: function (silo, data) {
-        this.__silo = silo;
-        Object.keys(data).each(function (key) {
-            if ('__' === key.substr(0,2)) { return; }
-            this[key] = data[key];
-        }.bind(this));
-    },
-
-    /**
-     * Produce a hash from object data, minus any database metadata & etc.
-     *
-     * @returns {Object} Data from the object.
-     */
-    toHash: function () {
-        var h = $H();
-        Object.keys(this).each(function (key) {
-            if ('__' === key.substr(0,2)) { return; }
-            h.set(key, this[key]);
-        }.bind(this));
-        return h;
+    initialize: function ($super, silo, data) {
+        this.silo = silo;
+        $super(data);
     },
 
     /**
      * Save this object to the silo.
      */
     save: function (on_success, on_error) {
-        if (!this.uuid) { 
-            this.uuid = Math.uuid(); 
+        if (!this.get('uuid')) { 
+            this.set('uuid', Math.uuid());
         }
-        if (!this.created) { 
-            this.created = (new Date()).getTime();
+        if (!this.get('created')) { 
+            this.set('created', (new Date()).getTime());
         }
-        this.modified = (new Date()).getTime();
-        this.__silo._save(this, on_success, on_error);
+        this.set('modified', (new Date()).getTime());
+        this.silo._save(this, on_success, on_error);
         return this;
     },
 
-    __EOF:null
+    EOF:null
 });
 
 Decafbad.Silo = Class.create(/** @lends Decafbad.Silo */{
@@ -134,7 +114,7 @@ Decafbad.Silo = Class.create(/** @lends Decafbad.Silo */{
                     // No table version found, so assume table doesn't exist.
                     this._createTable(tx, chain.nextCallback(), on_failure);
                 } else {
-                    if (table_version !== object_proto.__version) {
+                    if (table_version !== object_proto.version) {
                         // Table exists, but version mismatch.
                         // TODO: table upgrades
                         // Mojo.Log.error("NEED UPGRADE FROM %s TO %s",
@@ -227,7 +207,7 @@ Decafbad.Silo = Class.create(/** @lends Decafbad.Silo */{
      */
     query: function (partial_sql, vals, on_success, on_failure) {
         var $this = this,
-            blob_col = this.row_class.prototype.__blob_column,
+            blob_col = this.row_class.prototype.blob_column,
             sql = [
                 'SELECT id, ' + blob_col,
                 'FROM ' + this.table_name,
@@ -279,19 +259,19 @@ Decafbad.Silo = Class.create(/** @lends Decafbad.Silo */{
      * @param {function}            on_failure Callback on failure
      */
     _save: function (obj, on_success, on_failure) {
-        var data = obj.toHash(), sql, cols = [], vals = [], is_insert;
+        var sql, cols = [], vals = [], is_insert;
 
         // Gather the table column values from object data.
-        Object.keys(obj.__table_columns).each(function (col_name) {
+        Object.keys(obj.table_columns).each(function (col_name) {
             cols.push(col_name);
-            vals.push(data.get(obj.__table_columns[col_name]));
+            vals.push(obj.get(obj.table_columns[col_name]));
         });
 
         // Shove the JSON into the list of columns and values;
-        cols.push(obj.__blob_column);
-        vals.push(data.toJSON());
+        cols.push(obj.blob_column);
+        vals.push(obj.toJSON());
         
-        is_insert = (null === obj.__id);
+        is_insert = (!obj.get('id'));
         if (is_insert) {
             // If there's no ID, assume that this is a new object.
             sql = [
@@ -309,7 +289,7 @@ Decafbad.Silo = Class.create(/** @lends Decafbad.Silo */{
                 }).join(','),
                 "WHERE id=?"
             ];
-            vals.push(obj.__id);
+            vals.push(obj.get('id'));
         }
 
         // Finally, execute the SQL to insert or update
@@ -319,7 +299,7 @@ Decafbad.Silo = Class.create(/** @lends Decafbad.Silo */{
                 tx.executeSql(
                     sql, vals,
                     function (tx, rs) {
-                        if (is_insert) { obj.__id = rs.insertId; }
+                        if (is_insert) { obj.set('id', rs.insertId); }
                         on_success(obj);
                         return true;
                     }.bind(this),
@@ -381,14 +361,14 @@ Decafbad.Silo = Class.create(/** @lends Decafbad.Silo */{
      */
     _createTable: function (tx, on_success, on_failure) {
         var $this = this,
-            table_columns = $H($this.row_class.prototype.__table_columns);
+            table_columns = $H($this.row_class.prototype.table_columns);
             schema = [ 
                 "CREATE TABLE IF NOT EXISTS '" + $this.table_name + "' (", [
                     "'id' INTEGER PRIMARY KEY AUTOINCREMENT",
                     table_columns.keys().map(function (key) { 
                         return "'"+key+"' TEXT"; 
                     }),
-                    "'" + $this.row_class.prototype.__blob_column + "' BLOB"
+                    "'" + $this.row_class.prototype.blob_column + "' BLOB"
                 ].join(', '),
                 ")"
             ].flatten().join(' ');
@@ -399,7 +379,7 @@ Decafbad.Silo = Class.create(/** @lends Decafbad.Silo */{
                 "('table_name', 'version', 'json') VALUES (?,?,?)",
                 [ 
                     $this.table_name, 
-                    $this.row_class.prototype.__version,
+                    $this.row_class.prototype.version,
                     $H($this.row_class.prototype).toJSON()
                 ],
                 function (tx) { on_success(tx); },
@@ -432,7 +412,7 @@ Decafbad.Silo = Class.create(/** @lends Decafbad.Silo */{
      */
     _rsToObjects: function (rs) {
         var rows = rs.rows, objs = [], 
-            blob_col = this.row_class.prototype.__blob_column, 
+            blob_col = this.row_class.prototype.blob_column, 
             i, l;
 
         for (i=0,l=rows.length; i<l; i++) {
@@ -440,11 +420,11 @@ Decafbad.Silo = Class.create(/** @lends Decafbad.Silo */{
                 data = row[blob_col].evalJSON(),
                 obj  = this.factory(data);
             
-            obj.__id = row.id;
+            obj.set('id', row.id);
             objs.push(obj);
         }
         return objs;
     },
 
-    __EOF:null
+    EOF:null
 });
