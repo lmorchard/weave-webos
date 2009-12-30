@@ -39,7 +39,7 @@ Decafbad.Chain = Class.create(/** @lends Decafbad.Chain */{
      * Push a new function onto the end of the chain.
      */
     push: function (fn) {
-        if ('function' == typeof fn) {
+        if ('string' == typeof fn || 'function' == typeof fn) {
             this.actions.push(fn);
         } else {
             $A(fn).each(function (sub_fn) {
@@ -102,7 +102,7 @@ Decafbad.Chain = Class.create(/** @lends Decafbad.Chain */{
                     if (this.object && typeof this.object[action] == 'function') {
                         this.object[action].apply(this.object, args);
                     } else {
-                        this.error('unknown method');
+                        this.error('unknown method ' + action);
                     }
                 } else if (typeof action == 'function') {
                     // Accept a function, bind to the context object if supplied.
