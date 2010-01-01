@@ -54,8 +54,8 @@ Weave_API_Tests.prototype = (function () {
                     Mojo.Log.error("Login %s%% - %s", pct * 100, msg);
                     this.tickleFunction();
                 }.bind(this),
-                chain.nextCallback(),
-                chain.errorCallback('_performLogin')
+                chain.nextCb(),
+                chain.errorCb('_performLogin')
             );
         },
 
@@ -85,8 +85,8 @@ Weave_API_Tests.prototype = (function () {
                 .push("_performLogin")
                 .push(function (chain) {
                     this.api.listAllCollections(
-                        chain.nextCallback(),
-                        chain.errorCallback('testListAllCollections, listAllCollections')
+                        chain.nextCb(),
+                        chain.errorCb('testListAllCollections, listAllCollections')
                     );
                 })
                 .push(function (chain, collections) {
@@ -122,8 +122,8 @@ Weave_API_Tests.prototype = (function () {
                 .push("_performLogin")
                 .push(function (chain) {
                     this.api.listAllCollectionCounts(
-                        chain.nextCallback(),
-                        chain.errorCallback('testListAllCollectionCounts, ' + 
+                        chain.nextCb(),
+                        chain.errorCb('testListAllCollectionCounts, ' + 
                             'listAllCollectionCounts')
                     );
                 })
@@ -161,8 +161,8 @@ Weave_API_Tests.prototype = (function () {
                             "sort": "newest",
                             "limit": 5
                         },
-                        chain.nextCallback(),
-                        chain.errorCallback('testListCollection, listCollection')
+                        chain.nextCb(),
+                        chain.errorCb('testListCollection, listCollection')
                     );
                 })
                 .push(function (chain, collection_list) {
@@ -198,8 +198,8 @@ Weave_API_Tests.prototype = (function () {
                             "sort": "newest",
                             "limit": 5
                         },
-                        chain.nextCallback(),
-                        chain.errorCallback('testGetFromCollection, list')
+                        chain.nextCb(),
+                        chain.errorCb('testGetFromCollection, list')
                     );
                 })
                 .push(function (chain, collection_list) {
@@ -215,8 +215,8 @@ Weave_API_Tests.prototype = (function () {
                             this.api.getFromCollection(
                                 checked_collection,
                                 object_id,
-                                sub_chain.nextCallback(),
-                                sub_chain.errorCallback('fetching')
+                                sub_chain.nextCb(),
+                                sub_chain.errorCb('fetching')
                             );
                         });
 
@@ -228,7 +228,7 @@ Weave_API_Tests.prototype = (function () {
                         });
                     });
 
-                    sub_chain.push(chain.nextCallback()).next();
+                    sub_chain.push(chain.nextCb()).next();
                 })
                 .push(function (chain) {
                     recordResults(Mojo.Test.passed);

@@ -147,7 +147,7 @@ Decafbad.Chain = Class.create(/** @lends Decafbad.Chain */{
      * Any parameters supplied to this method are passed to next() when the
      * callback is called, followed by any parameters supplied to the callback. 
      */
-    nextCallback: function () {
+    nextCb: function () {
         var args  = $A(arguments),
             $this = this;
         return function () {
@@ -161,7 +161,7 @@ Decafbad.Chain = Class.create(/** @lends Decafbad.Chain */{
      * Any parameters supplied to this method are passed to on_error when the
      * callback is called, followed by any parameters supplied to the callback. 
      */
-    errorCallback: function () {
+    errorCb: function () {
         var args  = $A(arguments),
             $this = this;
         return function () {

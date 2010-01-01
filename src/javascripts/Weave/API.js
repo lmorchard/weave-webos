@@ -44,14 +44,14 @@ Weave.API.prototype = /** @lends Weave.API */ {
             function (chain) {
                 // First, work out which cluster has our data.
                 on_progress(0.1, "Finding your cluster");
-                this.findCluster(chain.nextCallback(), chain.errorCallback());
+                this.findCluster(chain.nextCb(), chain.errorCb());
             },
             function (chain, cluster_url) {
                 // Stash the cluster URL.
                 this.cluster_url = cluster_url;
                 // Next, fetch our priv and pub keys.
                 on_progress(0.2, "Fetching your keys");
-                this.fetchKeys(chain.nextCallback(), chain.errorCallback());
+                this.fetchKeys(chain.nextCb(), chain.errorCb());
             },
             function (chain, pubkey, privkey) {
                 on_progress(1.0, "Logged in " + this.options.username);
@@ -76,8 +76,8 @@ Weave.API.prototype = /** @lends Weave.API */ {
             function (chain) {
                 // Fetch the modified dates for all collections
                 this.fetch(info_url + '/collections',
-                    chain.nextCallback(),
-                    chain.errorCallback('getCollections /collections')
+                    chain.nextCb(),
+                    chain.errorCb('getCollections /collections')
                 );
             },
             function (chain, dates) {
@@ -124,8 +124,8 @@ Weave.API.prototype = /** @lends Weave.API */ {
                 // Fetch the modified dates for all collections
                 this.fetch(
                     url,
-                    chain.nextCallback(),
-                    chain.errorCallback('getCollections /' + collection_name)
+                    chain.nextCb(),
+                    chain.errorCb('getCollections /' + collection_name)
                 );
             },
             function (chain, data) {
@@ -149,15 +149,15 @@ Weave.API.prototype = /** @lends Weave.API */ {
             function (chain) {
                 this.fetchWithPayload(
                     object_url,
-                    chain.nextCallback(),
-                    chain.errorCallback('getFromCollection')
+                    chain.nextCb(),
+                    chain.errorCb('getFromCollection')
                 );
             },
             function (chain, data) {
                 this.symkeys.get(
                     data.payload.encryption,
-                    chain.nextCallback(data),
-                    chain.errorCallback('getFromCollection')
+                    chain.nextCb(data),
+                    chain.errorCb('getFromCollection')
                 );
             },
             function (chain, object_data, symkey) {
@@ -220,14 +220,14 @@ Weave.API.prototype = /** @lends Weave.API */ {
         var chain = new Decafbad.Chain([
             function (chain) {
                 this.pubkeys.getDefault(
-                    chain.nextCallback(),
-                    chain.errorCallback('fetchKeys (pubkey)')
+                    chain.nextCb(),
+                    chain.errorCb('fetchKeys (pubkey)')
                 );
             },
             function (chain, pubkey) {
                 this.privkeys.getDefault(
-                    chain.nextCallback(pubkey),
-                    chain.errorCallback('fetchKeys (privkey)')
+                    chain.nextCb(pubkey),
+                    chain.errorCb('fetchKeys (privkey)')
                 );
             },
             function (chain, pubkey, privkey) {

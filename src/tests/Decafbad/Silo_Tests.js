@@ -97,7 +97,7 @@ Decafbad_Silo_Tests.prototype = (function () {
                                 );
                                 chain.next();
                             }.bind(this), 
-                            chain.errorCallback()
+                            chain.errorCb()
                         );
                     }.bind(this));
                 },
@@ -127,7 +127,7 @@ Decafbad_Silo_Tests.prototype = (function () {
                     function (chain) {
                         Mojo.log("Saving %j", obj_data);
                         var obj = this.silo.factory(obj_data);
-                        this.silo.save(obj, chain.nextCallback(), chain.errorCallback());
+                        this.silo.save(obj, chain.nextCb(), chain.errorCb());
                     },
                     function (chain, saved_obj) {
                         Mojo.log("Saved %j", saved_obj.toObject());
@@ -135,8 +135,8 @@ Decafbad_Silo_Tests.prototype = (function () {
                             'ID should be defined');
                         this.silo.find(
                             saved_obj.get('id'), 
-                            chain.nextCallback(saved_obj), 
-                            chain.errorCallback()
+                            chain.nextCb(saved_obj), 
+                            chain.errorCb()
                         );
                     },
                     function (chain, saved_obj, found_obj) {
@@ -149,8 +149,8 @@ Decafbad_Silo_Tests.prototype = (function () {
                         );
                         this.silo.find(
                             { uuid: saved_obj.get('uuid') },
-                            chain.nextCallback(saved_obj, found_obj),
-                            chain.errorCallback()
+                            chain.nextCb(saved_obj, found_obj),
+                            chain.errorCb()
                         );
                     },
                     function (chain, saved_obj, id_found_obj, uuid_found_objs) {
@@ -187,14 +187,14 @@ Decafbad_Silo_Tests.prototype = (function () {
                         var orig_modified = saved_obj.modified;
                         saved_obj.set('name', saved_obj.get('name') + ' esq.');
                         saved_obj.get('pets').salamander = 1;
-                        this.silo.save(saved_obj, chain.nextCallback(orig_modified), 
-                            chain.errorCallback());
+                        this.silo.save(saved_obj, chain.nextCb(orig_modified), 
+                            chain.errorCb());
                     },
                     function (chain, orig_modified, saved_obj) {
                         this.silo.find(
                             saved_obj.get('id'), 
-                            chain.nextCallback(orig_modified, saved_obj), 
-                            chain.errorCallback()
+                            chain.nextCb(orig_modified, saved_obj), 
+                            chain.errorCb()
                         );
                     },
                     function (chain, orig_modified, saved_obj, found_obj2) {
@@ -219,7 +219,7 @@ Decafbad_Silo_Tests.prototype = (function () {
                     Mojo.log("Querying for age > 12");
                     this.silo.query(
                         [ 'WHERE age > ?' ], [12],
-                        chain.nextCallback(), chain.errorCallback()
+                        chain.nextCb(), chain.errorCb()
                     );
                 },
                 function (chain, result_objs) {
@@ -232,7 +232,7 @@ Decafbad_Silo_Tests.prototype = (function () {
                     this.silo.query(
                         [ 'WHERE name IN (?,?)'], 
                         [ "Mike Brown esq.", "John Smith esq." ],
-                        chain.nextCallback(), chain.errorCallback()
+                        chain.nextCb(), chain.errorCb()
                     );
                 },
                 function (chain, result_objs) {
@@ -285,9 +285,9 @@ Decafbad_Silo_Tests.prototype = (function () {
             this.silo.resetAll(
                 function () {
                     Mojo.log("Opening.");
-                    this.silo.open(chain.nextCallback(), chain.errorCallback());
+                    this.silo.open(chain.nextCb(), chain.errorCb());
                 }.bind(this),
-                chain.errorCallback()
+                chain.errorCb()
             );
         },
 

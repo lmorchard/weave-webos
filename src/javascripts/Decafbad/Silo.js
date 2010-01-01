@@ -115,12 +115,12 @@ Decafbad.Silo = Class.create(/** @lends Decafbad.Silo */{
         chain.push([
             function (chain, tx) {
                 // Try getting the version of the table.
-                this.getTableVersion(tx, chain.nextCallback(), on_failure);
+                this.getTableVersion(tx, chain.nextCb(), on_failure);
             },
             function (chain, tx, table_version) {
                 if (!table_version) {
                     // No table version found, so assume table doesn't exist.
-                    this._createTable(tx, chain.nextCallback(), on_failure);
+                    this._createTable(tx, chain.nextCb(), on_failure);
                 } else {
                     if (table_version !== object_proto.version) {
                         // Table exists, but version mismatch.
@@ -137,7 +137,7 @@ Decafbad.Silo = Class.create(/** @lends Decafbad.Silo */{
         ]);
 
         // Fire up the chain within a DB transaction
-        this.db.transaction(chain.nextCallback());
+        this.db.transaction(chain.nextCb());
 
         return this;
     },
@@ -165,13 +165,13 @@ Decafbad.Silo = Class.create(/** @lends Decafbad.Silo */{
         ];
         stmts.each(function (stmt) {
             chain.push(function (chain, tx) {
-                tx.executeSql(stmt, [], chain.nextCallback(tx), on_failure);
+                tx.executeSql(stmt, [], chain.nextCb(tx), on_failure);
             });
         });
 
         chain.push(on_success);
 
-        this.db.transaction(chain.nextCallback());
+        this.db.transaction(chain.nextCb());
     },
 
     /**
@@ -358,7 +358,7 @@ Decafbad.Silo = Class.create(/** @lends Decafbad.Silo */{
                             // Create the meta table since it wasn't found, and
                             // pass along a version of null to the next step.
                             $this._createMetaTable(
-                                tx, chain.nextCallback(tx, null), on_failure
+                                tx, chain.nextCb(tx, null), on_failure
                             );
                         } else {
                             // Some other error, so bail.

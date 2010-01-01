@@ -188,14 +188,14 @@ Weave.Model.SymKeyManager = Class.create(Weave.Model.RecordManager, /** @lends W
             function (record) {
                 var chain = new Decafbad.Chain([
                     function (chain) {
-                        pubkeys.getDefault(chain.nextCallback(), on_failure);
+                        pubkeys.getDefault(chain.nextCb(), on_failure);
                     },
                     function (chain, pubkey) {
-                        privkeys.getDefault(chain.nextCallback(pubkey), on_failure);
+                        privkeys.getDefault(chain.nextCb(pubkey), on_failure);
                     },
                     function (chain, pubkey, privkey) {
                         record.decrypt(pubkey, privkey, 
-                            chain.nextCallback(), on_failure);
+                            chain.nextCb(), on_failure);
                     },
                     function (chain) {
                         on_success(record);
