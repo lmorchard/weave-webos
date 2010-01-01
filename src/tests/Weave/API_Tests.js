@@ -63,33 +63,29 @@ Weave_API_Tests.prototype = (function () {
          * Exercise Weave login sequence.
          */
         testLogin: function (recordResults) {
-            Mojo.log("testLogin");
-            var chain = new Decafbad.Chain([], this);
-            chain.push([
+            var chain = new Decafbad.Chain([
                 "_performLogin",
                 function (chain) {
                     Mojo.Log.error("PUB KEY %s", $H(this.api.pubkey).keys());
                     Mojo.Log.error("PRIV KEY %s", $H(this.api.privkey).keys());
                     recordResults(Mojo.Test.passed);
                 }
-            ]).next();
+            ], this).start();
         },
 
         /**
          * Exercise the acquisition of collection info
          */
         testListAllCollections: function (recordResults) {
-            Mojo.log("testListAllCollections");
-            var chain = new Decafbad.Chain([], this);
-            chain
-                .push("_performLogin")
-                .push(function (chain) {
+            var chain = new Decafbad.Chain([
+                "_performLogin",
+                function (chain) {
                     this.api.listAllCollections(
                         chain.nextCb(),
                         chain.errorCb('testListAllCollections, listAllCollections')
                     );
-                })
-                .push(function (chain, collections) {
+                },
+                function (chain, collections) {
                     var expected_collections = Weave.TestData.expected_collections;
 
                     expected_collections.each(function (name) {
@@ -105,29 +101,27 @@ Weave_API_Tests.prototype = (function () {
                     }, this);
 
                     chain.next();
-                })
-                .push(function (chain) {
+                },
+                function (chain) {
                     recordResults(Mojo.Test.passed);
-                })
-                .next();
+                }
+            ], this).start();
         },
 
         /**
          * Exercise the acquisition of collection info
          */
         testListAllCollectionCounts: function (recordResults) {
-            Mojo.log("testListAllCollectionCounts");
-            var chain = new Decafbad.Chain([], this);
-            chain
-                .push("_performLogin")
-                .push(function (chain) {
+            var chain = new Decafbad.Chain([
+                "_performLogin",
+                function (chain) {
                     this.api.listAllCollectionCounts(
                         chain.nextCb(),
                         chain.errorCb('testListAllCollectionCounts, ' + 
                             'listAllCollectionCounts')
                     );
-                })
-                .push(function (chain, collections) {
+                },
+                function (chain, collections) {
                     var expected_collections = Weave.TestData.expected_collections;
                     expected_collections.each(function (name) {
                         Mojo.Log.error("COLLECTION %j = %j", name, collections[name]);
@@ -141,20 +135,18 @@ Weave_API_Tests.prototype = (function () {
                     }, this);
 
                     recordResults(Mojo.Test.passed);
-                })
-                .next();
+                }
+            ], this).start();
         },
 
         /**
          * Exercise listing a collection.
          */
         testListCollection: function (recordResults) {
-            Mojo.log("testListCollection");
             var checked_collection = Weave.TestData.checked_collection;
-                chain = new Decafbad.Chain([], this);
-            chain
-                .push("_performLogin")
-                .push(function (chain) {
+            var chain = new Decafbad.Chain([
+                "_performLogin",
+                function (chain) {
                     this.api.listCollection(
                         checked_collection,
                         { 
@@ -164,8 +156,8 @@ Weave_API_Tests.prototype = (function () {
                         chain.nextCb(),
                         chain.errorCb('testListCollection, listCollection')
                     );
-                })
-                .push(function (chain, collection_list) {
+                },
+                function (chain, collection_list) {
                     Mojo.Log.error("LIST %s %j", 
                         checked_collection, collection_list);
                     Mojo.require(collection_list.length > 0,
@@ -173,25 +165,23 @@ Weave_API_Tests.prototype = (function () {
                     Mojo.require("string" == typeof collection_list[0],
                         "The first item in the list should be a string");
                     chain.next();
-                })
-                .push(function (chain) {
+                },
+                function (chain) {
                     recordResults(Mojo.Test.passed);
-                })
-                .next();
+                }
+            ], this).start();
         },
 
         /**
          * Exercise fetching individual items from a collection.
          */
         testGetFromCollection: function (recordResults) {
-            Mojo.log('testGetFromCollection');
             var checked_collection = Weave.TestData.checked_collection,
                 object_id = null,
-                objects = [],
-                chain = new Decafbad.Chain([], this);
-            chain
-                .push("_performLogin")
-                .push(function (chain) {
+                objects = [];
+            var chain = new Decafbad.Chain([
+                "_performLogin",
+                function (chain) {
                     this.api.listCollection(
                         checked_collection,
                         {
@@ -201,8 +191,8 @@ Weave_API_Tests.prototype = (function () {
                         chain.nextCb(),
                         chain.errorCb('testGetFromCollection, list')
                     );
-                })
-                .push(function (chain, collection_list) {
+                },
+                function (chain, collection_list) {
 
                     var sub_chain = new Decafbad.Chain([], this),
                         sub_list = collection_list.slice(0,5);
@@ -229,11 +219,12 @@ Weave_API_Tests.prototype = (function () {
                     });
 
                     sub_chain.push(chain.nextCb()).next();
-                })
-                .push(function (chain) {
+
+                },
+                function (chain) {
                     recordResults(Mojo.Test.passed);
-                })
-                .next();
+                }
+            ], this).start();
         },
 
         EOF:null // I hate trailing comma errors

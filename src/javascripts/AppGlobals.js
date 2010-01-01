@@ -44,13 +44,25 @@ var AppGlobals = (function () { /** @lends AppGlobals */
          * Set up tests, if enabled.
          */
         setupTests: function () {
+
+            // Monkey-patch runNextTest to log name of test to be run.
+            var orig_runNextTest = Mojo.Test.Runner.prototype.runNextTest;
+            /** @ignore */
+            Mojo.Test.Runner.prototype.runNextTest = function () {
+                if (!this.stopRequested && this.functionsToRun[0]) {
+                    Mojo.log('=============================================');
+                    Mojo.log('Running test "' + this.functionsToRun[0] + '"');
+                }
+                orig_runNextTest.apply(this);
+            };
+
             // Hijack TestAssistant.updateResults to generate more logging
             // spew in console.
-            var orig_fn = Mojo.Test.TestAssistant.prototype.updateResults;
+            var orig_updateResults = Mojo.Test.TestAssistant.prototype.updateResults;
             /** @ignore */
             Mojo.Test.TestAssistant.prototype.updateResults = function () {
                 Mojo.log("Reporting test results...");
-                orig_fn.apply(this);
+                orig_updateResults.apply(this);
                 // TODO: Include the suite name here
                 this.resultsModel.items.each(function(item) {
                     Mojo.log("    %s: %s", item.method, item.message);

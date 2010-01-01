@@ -219,16 +219,12 @@ Weave.API.prototype = /** @lends Weave.API */ {
 
         var chain = new Decafbad.Chain([
             function (chain) {
-                this.pubkeys.getDefault(
-                    chain.nextCb(),
-                    chain.errorCb('fetchKeys (pubkey)')
-                );
+                this.pubkeys.getDefault(chain.nextCb(), 
+                    chain.errorCb('fetchKeys (pubkey)'));
             },
             function (chain, pubkey) {
-                this.privkeys.getDefault(
-                    chain.nextCb(pubkey),
-                    chain.errorCb('fetchKeys (privkey)')
-                );
+                this.privkeys.getDefault(chain.nextCb(pubkey), 
+                    chain.errorCb('fetchKeys (privkey)'));
             },
             function (chain, pubkey, privkey) {
                 on_success(pubkey, privkey);
