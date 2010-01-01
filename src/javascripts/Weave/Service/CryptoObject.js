@@ -1,5 +1,5 @@
 /**
- * @fileOverview Crypto wrapper for weave basic object
+ * @fileOverview Crypto Object for weave basic object
  * @author <a href="http://decafbad.com">l.m.orchard@pobox.com</a>
  * @version 0.1
  */
@@ -7,12 +7,12 @@
 /*global Mojo, Weave, Chain, Class, Ajax */
 
 /**
- * Wrapper for service objects with built-in decryption
+ * Object for service objects with built-in decryption
  *
  * @class
  * @augments Weave.Service.BasicObject
  */
-Weave.Service.CryptoWrapper = Class.create(Weave.Service.BasicObject, /** @lends Weave.Service.CryptoWrapper */{
+Weave.Service.CryptoObject = Class.create(Weave.Service.BasicObject, /** @lends Weave.Service.CryptoObject */{
 
     /**
      * TODO:
@@ -62,10 +62,10 @@ Weave.Service.CryptoWrapper = Class.create(Weave.Service.BasicObject, /** @lends
 /**
  * @class 
  */
-Weave.Service.CryptoWrapperCollection = Class.create(Weave.Service.RecordManager, /** @lends Weave.Service.CryptoWrapperManager */ {
+Weave.Service.CryptoObjectCollection = Class.create(Weave.Service.RecordManager, /** @lends Weave.Service.CryptoObjectCollection */ {
 
     _collection_name: 'history',
-    _record_type: Weave.Service.CryptoWrapper,
+    _record_type: Weave.Service.CryptoObject,
 
     /**
      * Get an object by ID
@@ -113,7 +113,7 @@ Weave.Service.CryptoWrapperCollection = Class.create(Weave.Service.RecordManager
             },
             function (chain, data) {
                 if ('full' in params) {
-                    // TODO: Instantiate object wrappers
+                    // TODO: Instantiate object Objects
                 } else {
                     chain.next(data);
                 }

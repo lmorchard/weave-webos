@@ -26,7 +26,7 @@ Weave.Service = Class.create(/** @lends Weave.Service */ {
         this.privkeys = new Weave.Service.PrivKeyManager(this);
         this.pubkeys  = new Weave.Service.PubKeyManager(this);
         this.symkeys  = new Weave.Service.SymKeyManager(this);
-        this.items    = new Weave.Service.CryptoWrapperCollection(this);
+        this.items    = new Weave.Service.CryptoObjectCollection(this);
     },
 
     /**

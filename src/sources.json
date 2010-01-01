@@ -24,7 +24,7 @@
     {"source": "javascripts/Weave/Service/Service.js"},
     {"source": "javascripts/Weave/Service/BasicObject.js"},
     {"source": "javascripts/Weave/Service/Keys.js"},
-    {"source": "javascripts/Weave/Service/CryptoWrapper.js"},
+    {"source": "javascripts/Weave/Service/CryptoObject.js"},
 
     {"source": "javascripts/AppGlobals.js"},
     {"source": "app/assistants/app-assistant.js"},
