@@ -27,29 +27,37 @@ Decafbad.SiloObject = Class.create(Hash, /** @lends Decafbad.SiloObject */{
     /**
      * Object wrapper for DB rows
      * @constructs
+     * @augments Hash
      * @author l.m.orchard@pobox.com
      *
-     * @param {Decafbad.Silo} silo Source silo for the row
      * @param {Object}        data DB row data / object data
      */
-    initialize: function ($super, silo, data) {
-        this.silo = silo;
+    initialize: function ($super, data) {
         $super(data);
     },
 
     /**
-     * Save this object to the silo.
+     * Enhancement to Hash.set() that looks for set_{key} methods for
+     * by-property delegate handlers.
      */
-    save: function (on_success, on_error) {
-        if (!this.get('uuid')) { 
-            this.set('uuid', Math.uuid());
+    set: function ($super, key, value) {
+        var fn_name = 'set_'+key;
+        if ('function' === typeof this[fn_name]) {
+            return this[fn_name]($super, value);
         }
-        if (!this.get('created')) { 
-            this.set('created', (new Date()).getTime());
+        return $super(key, value);
+    },
+
+    /**
+     * Enhancement to Hash.get() that looks for get_{key} methods for
+     * by-property delegate handlers.
+     */
+    get: function ($super, key) {
+        var fn_name = 'get_'+key;
+        if ('function' === typeof this[fn_name]) {
+            return this[fn_name]($super);
         }
-        this.set('modified', (new Date()).getTime());
-        this.silo._save(this, on_success, on_error);
-        return this;
+        return $super(key);
     },
 
     EOF:null
@@ -135,8 +143,8 @@ Decafbad.Silo = Class.create(/** @lends Decafbad.Silo */{
     },
 
     /**
-     * Reset by destroying all silos and the meta table, most useful for
-     * clearing things out before tests.
+     * Reset by destroying this silo and its record from the meta table,
+     * most useful for clearing things out before tests.
      *
      * @param {function} on_success Callback on success
      * @param {function} on_failure Callback on failure
@@ -152,7 +160,7 @@ Decafbad.Silo = Class.create(/** @lends Decafbad.Silo */{
         );
 
         var stmts = [
-            'DROP TABLE IF EXISTS "'+this.meta_table_name+'"',
+            'DELETE FROM '+this.meta_table_name+' WHERE table_name="'+this.table_name+'"',
             'DROP TABLE IF EXISTS "'+this.table_name+'"'
         ];
         stmts.each(function (stmt) {
@@ -201,9 +209,9 @@ Decafbad.Silo = Class.create(/** @lends Decafbad.Silo */{
      * Perform a query with partial SQL, assuming the SELECT / FROM parts are
      * already supplied.
      *
-     * @param {string|array } partial_sql ID or object
-     * @param {function}      on_success  Callback on success
-     * @param {function}      on_failure  Callback on failure
+     * @param {string|array} partial_sql ID or object
+     * @param {function}     on_success  Callback on success
+     * @param {function}     on_failure  Callback on failure
      */
     query: function (partial_sql, vals, on_success, on_failure) {
         var $this = this,
@@ -248,7 +256,7 @@ Decafbad.Silo = Class.create(/** @lends Decafbad.Silo */{
      * @param {object} data Object data / DB row data
      */
     factory: function (data) {
-        return new this.row_class(this, data);
+        return new this.row_class(data);
     },
 
     /**
@@ -258,8 +266,19 @@ Decafbad.Silo = Class.create(/** @lends Decafbad.Silo */{
      * @param {function}            on_success Callback on success
      * @param {function}            on_failure Callback on failure
      */
-    _save: function (obj, on_success, on_failure) {
+    save: function (obj, on_success, on_failure) {
         var sql, cols = [], vals = [], is_insert;
+
+        // Make sure this object knows its silo now.
+        obj.silo = this;
+
+        if (!obj.get('uuid')) { 
+            obj.set('uuid', Math.uuid());
+        }
+        if (!obj.get('created')) { 
+            obj.set('created', (new Date()).getTime());
+        }
+        obj.set('modified', (new Date()).getTime());
 
         // Gather the table column values from object data.
         Object.keys(obj.table_columns).each(function (col_name) {

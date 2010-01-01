@@ -20,12 +20,16 @@ Decafbad_Silo_Tests.prototype = (function () {
         row_class: Class.create(Decafbad.SiloObject, {
             version: "1.0.1",
             table_columns: { 
-                'uuid':     'uuid', 
-                'name':     'name',
-                'age':      'age',
-                'address':  'address',
-                'created':  'created', 
-                'modified': 'modified' 
+                'uuid':       'uuid', 
+                'name':       'name',
+                'age':        'age',
+                'address':    'address',
+                'created':    'created', 
+                'modified':   'modified',
+                'pets_count': 'pets_count'
+            },
+            get_pets_count: function($super) {
+                return $H(this.get('pets')).keys().length;
             }
         })
     });
@@ -123,7 +127,7 @@ Decafbad_Silo_Tests.prototype = (function () {
                     function (chain) {
                         Mojo.log("Saving %j", obj_data);
                         var obj = this.silo.factory(obj_data);
-                        obj.save(chain.nextCallback(), chain.errorCallback());
+                        this.silo.save(obj, chain.nextCallback(), chain.errorCallback());
                     },
                     function (chain, saved_obj) {
                         Mojo.log("Saved %j", saved_obj.toObject());
@@ -136,7 +140,8 @@ Decafbad_Silo_Tests.prototype = (function () {
                         );
                     },
                     function (chain, saved_obj, found_obj) {
-                        Mojo.log("Found (id) %j", found_obj.toObject());
+                        //Mojo.log("Found (id) %j", found_obj.toObject());
+                        Mojo.log("Found (id) %j", found_obj);
                         Mojo.require(
                             null !== found_obj,
                             "An object for id %s should have been found", 
@@ -182,7 +187,7 @@ Decafbad_Silo_Tests.prototype = (function () {
                         var orig_modified = saved_obj.modified;
                         saved_obj.set('name', saved_obj.get('name') + ' esq.');
                         saved_obj.get('pets').salamander = 1;
-                        saved_obj.save(chain.nextCallback(orig_modified), 
+                        this.silo.save(saved_obj, chain.nextCallback(orig_modified), 
                             chain.errorCallback());
                     },
                     function (chain, orig_modified, saved_obj) {
@@ -205,7 +210,7 @@ Decafbad_Silo_Tests.prototype = (function () {
                             found_obj2.get('modified') !== found_obj2.get('created')
                         );
                         chain.next();
-                    },
+                    }
                 ]);
             });
 
@@ -250,6 +255,26 @@ Decafbad_Silo_Tests.prototype = (function () {
 
             // Fire it up
             chain.next();
+        },
+
+        /**
+         * Exercise property delegates, namely the pets_count property.
+         */
+        testPropertyDelegates: function (recordResults) {
+            var $this = this;
+            
+            this.silo = new TestSilo();
+
+            $A(test_objects).each(function (obj_data) {
+                var obj = this.silo.factory(obj_data),
+                    pets = obj.get('pets');
+                Mojo.requireEqual(
+                    $H(pets).keys().length, 
+                    obj.get('pets_count')
+                );
+            }, this);
+
+            recordResults(Mojo.Test.passed); 
         },
 
         /**
