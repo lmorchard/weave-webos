@@ -52,6 +52,7 @@ var AppGlobals = (function () { /** @lends AppGlobals */
                 if (!this.stopRequested && this.functionsToRun[0]) {
                     Mojo.log('=============================================');
                     Mojo.log('Running test "' + this.functionsToRun[0] + '"');
+                    Mojo.log('=============================================');
                 }
                 orig_runNextTest.apply(this);
             };
