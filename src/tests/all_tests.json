@@ -1,7 +1,7 @@
 [
 	{
 		"title": "Weave API Tests",
-		"source": "tests\/Weave_API_Tests.js",
+		"source": "tests\/Weave\/API_Tests.js",
 		"testFunction": "Weave_API_Tests"
-	},
+	}
 ]

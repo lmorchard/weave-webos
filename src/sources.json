@@ -25,6 +25,7 @@
     
     {"source": "app/models/Weave/Model/Model.js"},
     {"source": "app/models/Weave/Model/BasicObject.js"},
+    {"source": "app/models/Weave/Model/Keys.js"},
 
     {"source": "javascripts/AppGlobals.js"},
     {"source": "app/assistants/app-assistant.js"},
