@@ -6,7 +6,7 @@
 /*jslint laxbreak: true */
 /*global Mojo, Weave, Chain, Class, Ajax */
 
-Weave.Model.BasicObject = Class.create(Decafbad.SiloObject, /** @lends Weave.Model.BasicObject */{
+Weave.Service.BasicObject = Class.create(Decafbad.SiloObject, /** @lends Weave.Service.BasicObject */{
 
     /**
      * Weave basic object
@@ -47,33 +47,33 @@ Weave.Model.BasicObject = Class.create(Decafbad.SiloObject, /** @lends Weave.Mod
 
 });
 
-Weave.Model.RecordManager = Class.create(/** @lends Weave.Model.RecordManager */{
+Weave.Service.RecordManager = Class.create(/** @lends Weave.Service.RecordManager */{
 
     /** Class to be instantiated for each record fetched. */
-    _record_type: Weave.Model.BasicObject,
+    _record_type: Weave.Service.BasicObject,
 
     /**
      * Manager of a set of weave basic objects
      * 
-     * @param {Weave.API} api Instance of Weave.API
+     * @param {Weave.Service} service Instance of Weave.Service
      *
      * @constructs
      * @author l.m.orchard@pobox.com
      */
-    initialize: function (api) {
-        this.api = api;
+    initialize: function (service) {
+        this.service = service;
         this._records = {};
     },
 
     /**
-     * Force a fetch from the API.
+     * Force a fetch from the service.
      *
      * @param {string}   url        URL of the record to fetch
      * @param {function} on_success Success callback (record)
      * @param {function} on_failure Failure callback (record)
      */
     _import: function (url, on_success, on_failure) {
-        this.api.fetch(
+        this.service.fetch(
             url,
             function (data, resp) {
                 if (!data) { on_failure(this); }
@@ -107,7 +107,7 @@ Weave.Model.RecordManager = Class.create(/** @lends Weave.Model.RecordManager */
      * Store a record in the manager cache at the given URL.
      *
      * @param {string} url URL for record
-     * @param {Weave.Model.BasicObject} record Record to store
+     * @param {Weave.Service.BasicObject} record Record to store
      */
     set: function (url, record) {
         this._records[url] = record;

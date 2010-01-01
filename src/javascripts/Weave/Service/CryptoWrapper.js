@@ -10,9 +10,9 @@
  * Wrapper for service objects with built-in decryption
  *
  * @class
- * @augments Weave.Model.BasicObject
+ * @augments Weave.Service.BasicObject
  */
-Weave.Model.CryptoWrapper = Class.create(Weave.Model.BasicObject, /** @lends Weave.Model.CryptoWrapper */{
+Weave.Service.CryptoWrapper = Class.create(Weave.Service.BasicObject, /** @lends Weave.Service.CryptoWrapper */{
 
     /**
      * TODO:
@@ -23,7 +23,7 @@ Weave.Model.CryptoWrapper = Class.create(Weave.Model.BasicObject, /** @lends Wea
     /**
      * Decrypt the contents of this record.
      *
-     * @param {Weave.Model.SymKey} symkey     Symkey used to decrypt object
+     * @param {Weave.Service.SymKey} symkey     Symkey used to decrypt object
      * @param {function}           on_success Success callback (record)
      * @param {function}           on_failure Failure callback
      */
@@ -35,7 +35,7 @@ Weave.Model.CryptoWrapper = Class.create(Weave.Model.BasicObject, /** @lends Wea
                 if (symkey) {
                     chain.next(symkey);
                 } else {
-                    this.manager.api.symkeys.get(
+                    this.manager.service.symkeys.get(
                         this.get('payload').encryption,
                         chain.nextCb(), chain.errorCb()
                     );
@@ -62,10 +62,10 @@ Weave.Model.CryptoWrapper = Class.create(Weave.Model.BasicObject, /** @lends Wea
 /**
  * @class 
  */
-Weave.Model.CryptoWrapperCollection = Class.create(Weave.Model.RecordManager, /** @lends Weave.Model.CryptoWrapperManager */ {
+Weave.Service.CryptoWrapperCollection = Class.create(Weave.Service.RecordManager, /** @lends Weave.Service.CryptoWrapperManager */ {
 
     _collection_name: 'history',
-    _record_type: Weave.Model.CryptoWrapper,
+    _record_type: Weave.Service.CryptoWrapper,
 
     /**
      * Get an object by ID
@@ -75,8 +75,8 @@ Weave.Model.CryptoWrapperCollection = Class.create(Weave.Model.RecordManager, /*
      * @param {function} on_failure Failure callback
      */
     getByID: function (object_id, on_success, on_failure) {
-        var url = this.api.cluster_url + this.api.options.api_version + 
-            '/' + encodeURIComponent(this.api.options.username) + 
+        var url = this.service.cluster_url + this.service.options.service_version + 
+            '/' + encodeURIComponent(this.service.options.username) + 
             '/storage/' + encodeURIComponent(this._collection_name) + 
             '/' + encodeURIComponent(object_id);
         return this.get(url, on_success, on_failure);
@@ -99,8 +99,8 @@ Weave.Model.CryptoWrapperCollection = Class.create(Weave.Model.RecordManager, /*
             params.record_type : this._record_type;
         delete params.record_type;
 
-        var url = this.api.cluster_url + this.api.options.api_version + 
-            '/' + encodeURIComponent(this.api.options.username) + 
+        var url = this.service.cluster_url + this.service.options.service_version + 
+            '/' + encodeURIComponent(this.service.options.username) + 
             '/storage/' + encodeURIComponent(collection_name);
 
         if (params) {
@@ -109,7 +109,7 @@ Weave.Model.CryptoWrapperCollection = Class.create(Weave.Model.RecordManager, /*
 
         var chain = new Decafbad.Chain([
             function (chain) {
-                this.api.fetch(url, chain.nextCb(), chain.errorCb());
+                this.service.fetch(url, chain.nextCb(), chain.errorCb());
             },
             function (chain, data) {
                 if ('full' in params) {

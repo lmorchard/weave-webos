@@ -1,26 +1,26 @@
 /**
- * @fileOverview Tests for Weave.API
+ * @fileOverview Tests for Weave.Service
  * @author <a href="http://decafbad.com">l.m.orchard@pobox.com</a>
  * @version 0.1
  */
 /*jslint laxbreak: true */
 /*global Mojo, Weave, Chain, Class, Ajax */
-function Weave_API_Tests(tickleFunction) {
+function Weave_Service_Tests(tickleFunction) {
     this.initialize(tickleFunction);
 }
 
-Weave_API_Tests.api = new Weave.API({
+Weave_Service_Tests.service = new Weave.Service({
     username:   Weave.TestData.auth.username,
     password:   Weave.TestData.auth.password,
     passphrase: Weave.TestData.auth.passphrase
 }); 
 
 // Extra long timeout to account for slow network.
-Weave_API_Tests.timeoutInterval = 120000;
+Weave_Service_Tests.timeoutInterval = 120000;
 
-Weave_API_Tests.prototype = (function () {
+Weave_Service_Tests.prototype = (function () {
 
-    return /** @lends Weave_API_Tests */ {
+    return /** @lends Weave_Service_Tests */ {
 
         /**
          * Test setup, run before execution of each test.
@@ -33,9 +33,9 @@ Weave_API_Tests.prototype = (function () {
         initialize: function (tickleFunction) {
             this.tickleFunction = tickleFunction;
 
-            this.api = Weave_API_Tests.api;
+            this.service = Weave_Service_Tests.service;
             /*
-            this.api = new Weave.API({
+            this.service = new Weave.Service({
                 username:   Weave.TestData.auth.username,
                 password:   Weave.TestData.auth.password,
                 passphrase: Weave.TestData.auth.passphrase
@@ -49,7 +49,7 @@ Weave_API_Tests.prototype = (function () {
          * Common login chain step
          */
         _performLogin: function (chain) {
-            this.api.login(
+            this.service.login(
                 function (pct, msg) {
                     Mojo.Log.error("Login %s%% - %s", pct * 100, msg);
                     this.tickleFunction();
@@ -66,8 +66,8 @@ Weave_API_Tests.prototype = (function () {
             var chain = new Decafbad.Chain([
                 "_performLogin",
                 function (chain) {
-                    Mojo.Log.error("PUB KEY %s", $H(this.api.pubkey).keys());
-                    Mojo.Log.error("PRIV KEY %s", $H(this.api.privkey).keys());
+                    Mojo.Log.error("PUB KEY %s", $H(this.service.pubkey).keys());
+                    Mojo.Log.error("PRIV KEY %s", $H(this.service.privkey).keys());
                     recordResults(Mojo.Test.passed);
                 }
             ], this).start();
@@ -80,7 +80,7 @@ Weave_API_Tests.prototype = (function () {
             var chain = new Decafbad.Chain([
                 "_performLogin",
                 function (chain) {
-                    this.api.listAllCollections(
+                    this.service.listAllCollections(
                         chain.nextCb(),
                         chain.errorCb('testListAllCollections, listAllCollections')
                     );
@@ -115,7 +115,7 @@ Weave_API_Tests.prototype = (function () {
             var chain = new Decafbad.Chain([
                 "_performLogin",
                 function (chain) {
-                    this.api.listAllCollectionCounts(
+                    this.service.listAllCollectionCounts(
                         chain.nextCb(),
                         chain.errorCb('testListAllCollectionCounts, ' + 
                             'listAllCollectionCounts')
@@ -147,7 +147,7 @@ Weave_API_Tests.prototype = (function () {
             var chain = new Decafbad.Chain([
                 "_performLogin",
                 function (chain) {
-                    this.api.items.list(
+                    this.service.items.list(
                         { 
                             "sort": "newest",
                             "limit": 5
@@ -181,7 +181,7 @@ Weave_API_Tests.prototype = (function () {
             var chain = new Decafbad.Chain([
                 "_performLogin",
                 function (chain) {
-                    this.api.items.list(
+                    this.service.items.list(
                         {
                             "sort": "newest",
                             "limit": 5
@@ -200,7 +200,7 @@ Weave_API_Tests.prototype = (function () {
 
                         sub_chain.push([
                             function (sub_chain) {
-                                this.api.items.getByID(
+                                this.service.items.getByID(
                                     object_id,
                                     sub_chain.nextCb(),
                                     sub_chain.errorCb('fetching')

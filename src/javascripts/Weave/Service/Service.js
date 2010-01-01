@@ -1,14 +1,14 @@
 /**
- * @fileOverview Wrapper for Weave API
+ * @fileOverview Wrapper for Weave.Service
  * @author <a href="http://decafbad.com">l.m.orchard@pobox.com</a>
  * @version 0.1
  */
 /*jslint laxbreak: true */
 /*global Mojo, Weave, Chain, Class, Ajax */
-Weave.API = Class.create(/** @lends Weave.API */ {
+Weave.Service = Class.create(/** @lends Weave.Service */ {
 
     /**
-     * Wrapper for Weave API
+     * Wrapper for Weave.Service
      * @constructs
      * @author l.m.orchard@pobox.com
      */
@@ -16,17 +16,17 @@ Weave.API = Class.create(/** @lends Weave.API */ {
         this.logged_in = false;
 
         this.options = Object.extend({
-            "api_url":     "https://services.mozilla.com",
-            "api_version": "1.0",
+            "service_url":     "https://services.mozilla.com",
+            "service_version": "1.0",
             "username":    null,
             "password":    null,
             "passphrase":  null
         }, options || {});
 
-        this.privkeys = new Weave.Model.PrivKeyManager(this);
-        this.pubkeys  = new Weave.Model.PubKeyManager(this);
-        this.symkeys  = new Weave.Model.SymKeyManager(this);
-        this.items    = new Weave.Model.CryptoWrapperCollection(this);
+        this.privkeys = new Weave.Service.PrivKeyManager(this);
+        this.pubkeys  = new Weave.Service.PubKeyManager(this);
+        this.symkeys  = new Weave.Service.SymKeyManager(this);
+        this.items    = new Weave.Service.CryptoWrapperCollection(this);
     },
 
     /**
@@ -61,7 +61,7 @@ Weave.API = Class.create(/** @lends Weave.API */ {
     listAllCollections: function (on_success, on_failure) {
         if (!this.logged_in) { return on_failure("NOT LOGGED IN"); }
 
-        var url = this.cluster_url + this.options.api_version +
+        var url = this.cluster_url + this.options.service_version +
             '/' + encodeURIComponent(this.options.username) +
             '/info/collections';
 
@@ -87,7 +87,7 @@ Weave.API = Class.create(/** @lends Weave.API */ {
      */
     listAllCollectionCounts: function (on_success, on_failure) {
         if (!this.logged_in) { return on_failure("NOT LOGGED IN"); }
-        var url = this.cluster_url + this.options.api_version + 
+        var url = this.cluster_url + this.options.service_version + 
             '/' + encodeURIComponent(this.options.username) +
             '/info/collection_counts';
         this.fetch(url, on_success, on_failure);
@@ -97,7 +97,7 @@ Weave.API = Class.create(/** @lends Weave.API */ {
      * Query the Weave service for this user's cluster URL.
      */
     findCluster: function (on_success, on_failure) {
-        var url = this.options.api_url + 
+        var url = this.options.service_url + 
             '/user/1/' + encodeURIComponent(this.options.username) + 
             '/node/weave';
         var req = new Ajax.Request(url,
@@ -113,7 +113,7 @@ Weave.API = Class.create(/** @lends Weave.API */ {
      * Fetch public and private keys from the cluster.
      */
     fetchKeys: function (on_success, on_failure) {
-        var base_url = this.cluster_url + this.options.api_version +
+        var base_url = this.cluster_url + this.options.service_version +
             '/' + encodeURIComponent(this.options.username) +
             '/storage/keys';
 
@@ -136,7 +136,7 @@ Weave.API = Class.create(/** @lends Weave.API */ {
     },
 
     /**
-     * Perform an authenticated GET against the API, parsing the JSON payload
+     * Perform an authenticated GET against the service, parsing the JSON payload
      * in place first.
      */
     fetch: function (url, on_success, on_failure) {

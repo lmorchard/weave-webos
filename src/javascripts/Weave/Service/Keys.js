@@ -10,9 +10,9 @@
  * Representation of a public key
  *
  * @class
- * @augments Weave.Model.BasicObject
+ * @augments Weave.Service.BasicObject
  */
-Weave.Model.PubKey = Class.create(Weave.Model.BasicObject, /** @lends Weave.Model.PubKey */{
+Weave.Service.PubKey = Class.create(Weave.Service.BasicObject, /** @lends Weave.Service.PubKey */{
     EOF:null
 });
 
@@ -20,11 +20,11 @@ Weave.Model.PubKey = Class.create(Weave.Model.BasicObject, /** @lends Weave.Mode
  * Manager of a set of public keys
  *
  * @class
- * @augments Weave.Model.RecordManager
+ * @augments Weave.Service.RecordManager
  */
-Weave.Model.PubKeyManager = Class.create(Weave.Model.RecordManager, /** @lends Weave.Model.PubKeyManager */{
+Weave.Service.PubKeyManager = Class.create(Weave.Service.RecordManager, /** @lends Weave.Service.PubKeyManager */{
 
-    _record_type: Weave.Model.PubKey,
+    _record_type: Weave.Service.PubKey,
     _default_url: null,
 
     /**
@@ -60,9 +60,9 @@ Weave.Model.PubKeyManager = Class.create(Weave.Model.RecordManager, /** @lends W
  * Representation of a private key
  *
  * @class
- * @augments Weave.Model.BasicObject
+ * @augments Weave.Service.BasicObject
  */
-Weave.Model.PrivKey = Class.create(Weave.Model.BasicObject, /** @lends Weave.Model.PrivKey */{
+Weave.Service.PrivKey = Class.create(Weave.Service.BasicObject, /** @lends Weave.Service.PrivKey */{
 
     /**
      * Decrypt this private key using a passphrase.
@@ -115,21 +115,21 @@ Weave.Model.PrivKey = Class.create(Weave.Model.BasicObject, /** @lends Weave.Mod
  * Manager of a set of private keys
  *
  * @class
- * @augments Weave.Model.PubKeyManager
+ * @augments Weave.Service.PubKeyManager
  */
-Weave.Model.PrivKeyManager = Class.create(Weave.Model.PubKeyManager, /** @lends Weave.Model.PrivKeyManager */{
-    _record_type: Weave.Model.PrivKey,
+Weave.Service.PrivKeyManager = Class.create(Weave.Service.PubKeyManager, /** @lends Weave.Service.PrivKeyManager */{
+    _record_type: Weave.Service.PrivKey,
 
     /**
      * Override to superclass _import that automatically decrypts all newly
-     * fetched private keys using the passphrase from API.
+     * fetched private keys using the passphrase from service.
      */
     _import: function ($super, url, on_success, on_failure) {
         $super(
             url,
             function (record) {
                 record.decrypt(
-                    this.api.options.passphrase,
+                    this.service.options.passphrase,
                     on_success, on_failure
                 );
             }.bind(this),
@@ -144,19 +144,19 @@ Weave.Model.PrivKeyManager = Class.create(Weave.Model.PubKeyManager, /** @lends 
  * Representation of a symmetric key
  *
  * @class
- * @augments Weave.Model.BasicObject
+ * @augments Weave.Service.BasicObject
  */
-Weave.Model.SymKey = Class.create(Weave.Model.BasicObject, /** @lends Weave.Model.SymKey */{
+Weave.Service.SymKey = Class.create(Weave.Service.BasicObject, /** @lends Weave.Service.SymKey */{
 
     /**
      * Decrypt this symmetric key given a public and private key pair.
      *
-     * @param {Weave.Model.PubKey}  pubkey  Public key
-     * @param {Weave.Model.PrivKey} privkey Private key
+     * @param {Weave.Service.PubKey}  pubkey  Public key
+     * @param {Weave.Service.PrivKey} privkey Private key
      */
     decrypt: function (pubkey, privkey, on_success, on_failure) {
-        var privkeys = this.manager.api.privkeys,
-            pubkeys  = this.manager.api.pubkeys;
+        var privkeys = this.manager.service.privkeys,
+            pubkeys  = this.manager.service.pubkeys;
 
         var chain = new Decafbad.Chain([
             function (chain) {
@@ -192,10 +192,10 @@ Weave.Model.SymKey = Class.create(Weave.Model.BasicObject, /** @lends Weave.Mode
  * Manager of a set of symmetric keys
  *
  * @class
- * @augments Weave.Model.RecordManager
+ * @augments Weave.Service.RecordManager
  */
-Weave.Model.SymKeyManager = Class.create(Weave.Model.RecordManager, /** @lends Weave.Model.SymKeyManager */{
-    _record_type: Weave.Model.SymKey,
+Weave.Service.SymKeyManager = Class.create(Weave.Service.RecordManager, /** @lends Weave.Service.SymKeyManager */{
+    _record_type: Weave.Service.SymKey,
 
     /**
      * Override to superclass _import that automatically decrypts all newly
