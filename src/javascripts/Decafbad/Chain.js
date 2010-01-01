@@ -43,7 +43,7 @@ Decafbad.Chain = Class.create(/** @lends Decafbad.Chain */{
             this.actions.push(fn);
         } else {
             $A(fn).each(function (sub_fn) {
-                this.actions.push(sub_fn)
+                this.actions.push(sub_fn);
             }, this);
         }
         return this;
@@ -90,7 +90,7 @@ Decafbad.Chain = Class.create(/** @lends Decafbad.Chain */{
             args = $A(arguments);
 
         // Use a zero-timeout to escape the call stack and yield to OS.
-        var fn = this.redo = (function () {
+        var fn = (function () {
 
             // Insert the chain object in front of the arguments for next(), all of
             // which will be passed to the next chain step.
@@ -120,6 +120,8 @@ Decafbad.Chain = Class.create(/** @lends Decafbad.Chain */{
             }
 
         }).bind(this);
+
+        this.redo = fn;
 
         if (this.options.use_timeouts) {
             // Use a zero-timeout to escape the call stack and yield to OS.
