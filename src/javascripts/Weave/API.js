@@ -5,11 +5,7 @@
  */
 /*jslint laxbreak: true */
 /*global Mojo, Weave, Chain, Class, Ajax */
-Weave.API = function() {
-    this.initialize.apply(this, $A(arguments));
-};
-
-Weave.API.prototype = /** @lends Weave.API */ {
+Weave.API = Class.create(/** @lends Weave.API */ {
 
     /**
      * Wrapper for Weave API
@@ -273,4 +269,4 @@ Weave.API.prototype = /** @lends Weave.API */ {
     },
 
     EOF:null // I hate trailing comma errors
-};
+});
