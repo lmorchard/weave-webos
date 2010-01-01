@@ -147,8 +147,7 @@ Weave_API_Tests.prototype = (function () {
             var chain = new Decafbad.Chain([
                 "_performLogin",
                 function (chain) {
-                    this.api.listCollection(
-                        checked_collection,
+                    this.api.items.list(
                         { 
                             "sort": "newest",
                             "limit": 5
@@ -158,8 +157,7 @@ Weave_API_Tests.prototype = (function () {
                     );
                 },
                 function (chain, collection_list) {
-                    Mojo.Log.error("LIST %s %j", 
-                        checked_collection, collection_list);
+                    Mojo.Log.error("LIST %j", collection_list);
                     Mojo.require(collection_list.length > 0,
                         "There should be at least one item in the collection");
                     Mojo.require("string" == typeof collection_list[0],
@@ -179,11 +177,11 @@ Weave_API_Tests.prototype = (function () {
             var checked_collection = Weave.TestData.checked_collection,
                 object_id = null,
                 objects = [];
+
             var chain = new Decafbad.Chain([
                 "_performLogin",
                 function (chain) {
-                    this.api.listCollection(
-                        checked_collection,
+                    this.api.items.list(
                         {
                             "sort": "newest",
                             "limit": 5
@@ -193,7 +191,6 @@ Weave_API_Tests.prototype = (function () {
                     );
                 },
                 function (chain, collection_list) {
-
                     var sub_chain = new Decafbad.Chain([], this),
                         sub_list = collection_list.slice(0,5);
                         
@@ -201,25 +198,26 @@ Weave_API_Tests.prototype = (function () {
                         Mojo.Log.error("QUEUEING OBJECT FETCH #%s - %s/%s", 
                             idx, checked_collection, object_id);
 
-                        sub_chain.push(function (sub_chain) {
-                            this.api.getFromCollection(
-                                checked_collection,
-                                object_id,
-                                sub_chain.nextCb(),
-                                sub_chain.errorCb('fetching')
-                            );
-                        });
-
-                        sub_chain.push(function (sub_chain, object) {
-                            objects.push(object);
-                            Mojo.require('object' === typeof object,
-                                "Collection should yield an object");
-                            sub_chain.next();
-                        });
+                        sub_chain.push([
+                            function (sub_chain) {
+                                this.api.items.getByID(
+                                    object_id,
+                                    sub_chain.nextCb(),
+                                    sub_chain.errorCb('fetching')
+                                );
+                            },
+                            function (sub_chain, object) {
+                                Mojo.log("FETCHED OBJECT %j", object);
+                                objects.push(object);
+                                Mojo.require('object' === typeof object,
+                                    "Collection should yield an object");
+                                sub_chain.next();
+                            }
+                        ]);
                     });
 
-                    sub_chain.push(chain.nextCb()).next();
-
+                    sub_chain.push(chain.nextCb());
+                    sub_chain.next();
                 },
                 function (chain) {
                     recordResults(Mojo.Test.passed);

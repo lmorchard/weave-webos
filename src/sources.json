@@ -11,7 +11,6 @@
     {"source": "javascripts/Weave/Weave.js"},
     {"source": "javascripts/Weave/util.js"},
     {"source": "javascripts/Weave/pkcs5v2.js"},
-    {"source": "javascripts/Weave/pkcs5v2-chained.js"},
     {"source": "javascripts/Weave/aes.js"},
     {"source": "javascripts/Weave/asn1.js"},
     {"source": "javascripts/Weave/rsa/jsbn.js"},
@@ -26,6 +25,7 @@
     {"source": "app/models/Weave/Model/Model.js"},
     {"source": "app/models/Weave/Model/BasicObject.js"},
     {"source": "app/models/Weave/Model/Keys.js"},
+    {"source": "app/models/Weave/Model/CryptoWrapper.js"},
 
     {"source": "javascripts/AppGlobals.js"},
     {"source": "app/assistants/app-assistant.js"},

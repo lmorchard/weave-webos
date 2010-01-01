@@ -111,6 +111,7 @@ Weave.Model.RecordManager = Class.create(/** @lends Weave.Model.RecordManager */
      */
     set: function (url, record) {
         this._records[url] = record;
+        record.manager = this;
         return record;
     },
 

@@ -155,13 +155,34 @@ Weave.Model.SymKey = Class.create(Weave.Model.BasicObject, /** @lends Weave.Mode
      * @param {Weave.Model.PrivKey} privkey Private key
      */
     decrypt: function (pubkey, privkey, on_success, on_failure) {
-        var rsa_key = privkey.get('rsa_key'),
-            key = this.get('payload').keyring[pubkey.get('url')],
-            symkey = Weave.Util.intify(rsa_key.decrypt(
-                Weave.Util.StH(Weave.Util.Base64.decode(key))
-            ));
-        this.set('symkey', symkey);
-        on_success(this);
+        var privkeys = this.manager.api.privkeys,
+            pubkeys  = this.manager.api.pubkeys;
+
+        var chain = new Decafbad.Chain([
+            function (chain) {
+                if (pubkey) {
+                    chain.next(pubkey);
+                } else {
+                    pubkeys.getDefault(chain.nextCb(), on_failure);
+                }
+            },
+            function (chain, pubkey) {
+                if (privkey) {
+                    chain.next(pubkey, privkey);
+                } else {
+                    privkeys.getDefault(chain.nextCb(pubkey), on_failure);
+                }
+            },
+            function (chain, pubkey, privkey) {
+                var rsa_key = privkey.get('rsa_key'),
+                    key = this.get('payload').keyring[pubkey.get('url')],
+                    symkey = Weave.Util.intify(rsa_key.decrypt(
+                        Weave.Util.StH(Weave.Util.Base64.decode(key))
+                    ));
+                this.set('symkey', symkey);
+                on_success(this);
+            }
+        ], this, on_failure).start();
     },
 
     EOF:null
@@ -181,26 +202,10 @@ Weave.Model.SymKeyManager = Class.create(Weave.Model.RecordManager, /** @lends W
      * fetched symmetric keys using the default public/private keys.
      */
     _import: function ($super, url, on_success, on_failure) {
-        var privkeys = this.api.privkeys,
-            pubkeys  = this.api.pubkeys;
         $super(
             url,
             function (record) {
-                var chain = new Decafbad.Chain([
-                    function (chain) {
-                        pubkeys.getDefault(chain.nextCb(), on_failure);
-                    },
-                    function (chain, pubkey) {
-                        privkeys.getDefault(chain.nextCb(pubkey), on_failure);
-                    },
-                    function (chain, pubkey, privkey) {
-                        record.decrypt(pubkey, privkey, 
-                            chain.nextCb(), on_failure);
-                    },
-                    function (chain) {
-                        on_success(record);
-                    }
-                ], this, on_failure).next();
+                record.decrypt(null, null, on_success, on_failure);
             }.bind(this),
             on_failure
         );

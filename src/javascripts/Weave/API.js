@@ -23,11 +23,10 @@ Weave.API = Class.create(/** @lends Weave.API */ {
             "passphrase":  null
         }, options || {});
 
-        this.options.u_username = encodeURIComponent(this.options.username);
-
         this.privkeys = new Weave.Model.PrivKeyManager(this);
         this.pubkeys  = new Weave.Model.PubKeyManager(this);
         this.symkeys  = new Weave.Model.SymKeyManager(this);
+        this.items    = new Weave.Model.CryptoWrapperCollection(this);
     },
 
     /**
@@ -38,15 +37,12 @@ Weave.API = Class.create(/** @lends Weave.API */ {
 
         var chain = new Decafbad.Chain([
             function (chain) {
-                // First, work out which cluster has our data.
                 on_progress(0.1, "Finding your cluster");
                 this.findCluster(chain.nextCb(), chain.errorCb());
             },
             function (chain, cluster_url) {
-                // Stash the cluster URL.
-                this.cluster_url = cluster_url;
-                // Next, fetch our priv and pub keys.
                 on_progress(0.2, "Fetching your keys");
+                this.cluster_url = cluster_url;
                 this.fetchKeys(chain.nextCb(), chain.errorCb());
             },
             function (chain, pubkey, privkey) {
@@ -65,16 +61,14 @@ Weave.API = Class.create(/** @lends Weave.API */ {
     listAllCollections: function (on_success, on_failure) {
         if (!this.logged_in) { return on_failure("NOT LOGGED IN"); }
 
-        var info_url = this.cluster_url + this.options.api_version + '/' +
-            this.options.u_username + '/info';
+        var url = this.cluster_url + this.options.api_version +
+            '/' + encodeURIComponent(this.options.username) +
+            '/info/collections';
 
         var chain = new Decafbad.Chain([
             function (chain) {
                 // Fetch the modified dates for all collections
-                this.fetch(info_url + '/collections',
-                    chain.nextCb(),
-                    chain.errorCb('getCollections /collections')
-                );
+                this.fetch(url, chain.nextCb(), chain.errorCb());
             },
             function (chain, dates) {
                 // Transform numeric dates into Date objects.
@@ -93,112 +87,24 @@ Weave.API = Class.create(/** @lends Weave.API */ {
      */
     listAllCollectionCounts: function (on_success, on_failure) {
         if (!this.logged_in) { return on_failure("NOT LOGGED IN"); }
-
-        var info_url = this.cluster_url + this.options.api_version + '/' +
-                this.options.u_username + '/info';
-
-        // Fetch and return the collection counts.
-        this.fetch(info_url + '/collection_counts', on_success, on_failure);
-    },
-
-    /**
-     * Fetch a list of IDs for the named collection.
-     */
-    listCollection: function (collection_name, params, on_success, on_failure) {
-        if (!this.logged_in) { return on_failure("NOT LOGGED IN"); }
-
-        var url = this.cluster_url + this.options.api_version + '/' + 
-                this.options.u_username + '/storage/' + 
-                encodeURIComponent(collection_name);
-
-        if (params) {
-            url = url + '?' + $H(params).toQueryString();
-        }
-
-        var chain = new Decafbad.Chain([
-            function (chain) {
-                // Fetch the modified dates for all collections
-                this.fetch(
-                    url,
-                    chain.nextCb(),
-                    chain.errorCb('getCollections /' + collection_name)
-                );
-            },
-            function (chain, data) {
-                return on_success(data);
-            }
-        ], this, on_failure).next();
-    },
-
-    /**
-     * Get an object from a collection by ID.
-     */
-    getFromCollection: function (collection_name, object_id, on_success, on_failure) {
-        if (!this.logged_in) { return on_failure("NOT LOGGED IN"); }
-
-        var object_url = this.cluster_url + this.options.api_version + '/' +
-                this.options.u_username + '/storage/' +
-                encodeURIComponent(collection_name) + '/' + 
-                encodeURIComponent(object_id);
-               
-        var chain = new Decafbad.Chain([
-            function (chain) {
-                this.fetchWithPayload(
-                    object_url,
-                    chain.nextCb(),
-                    chain.errorCb('getFromCollection')
-                );
-            },
-            function (chain, data) {
-                this.symkeys.get(
-                    data.payload.encryption,
-                    chain.nextCb(data),
-                    chain.errorCb('getFromCollection')
-                );
-            },
-            function (chain, object_data, symkey) {
-
-                // Finally, decrypt and cleanup the JSON for the object.
-                var json = Weave.Util.clearify(Weave.Crypto.AES.decrypt(
-                    symkey.get('symkey'), 
-                    Weave.Util.Base64.decode(symkey.get('payload').bulkIV), 
-                    Weave.Util.Base64.decode(object_data.payload.ciphertext)
-                ));
-
-                var date = new Date();
-                date.setTime(object_data.modified * 1000);
-                object_data.modified = date;
-                
-                var object = json.evalJSON();
-                object_data.object = object;
-
-                delete object_data.payload.ciphertext;
-                Mojo.log("OBJECT %j", object_data);
-                Mojo.log("OBJECT FULL %j", object_data.object);
-                
-                on_success(object_data);
-            }
-        ], this, on_failure).next();
-    },
-
-    _decryptObject: function (chain, object_data) {
-
+        var url = this.cluster_url + this.options.api_version + 
+            '/' + encodeURIComponent(this.options.username) +
+            '/info/collection_counts';
+        this.fetch(url, on_success, on_failure);
     },
 
     /**
      * Query the Weave service for this user's cluster URL.
      */
     findCluster: function (on_success, on_failure) {
-        var req = new Ajax.Request(
-            this.options.api_url + '/user/1/' + this.options.u_username + '/node/weave',
+        var url = this.options.api_url + 
+            '/user/1/' + encodeURIComponent(this.options.username) + 
+            '/node/weave';
+        var req = new Ajax.Request(url,
             {
                 method: 'GET',
-                onSuccess: function (resp) {
-                    on_success(resp.responseText);
-                }.bind(this),
-                onFailure: function () {
-                    on_failure(resp, 'findCluster');
-                }.bind(this)
+                onSuccess: function (resp) { on_success(resp.responseText); },
+                onFailure: function () { on_failure(resp, 'findCluster'); }
             }
         );
     },
@@ -207,8 +113,9 @@ Weave.API = Class.create(/** @lends Weave.API */ {
      * Fetch public and private keys from the cluster.
      */
     fetchKeys: function (on_success, on_failure) {
-        var base_url = this.cluster_url + this.options.api_version + '/' + 
-                this.options.u_username + '/storage/keys';
+        var base_url = this.cluster_url + this.options.api_version +
+            '/' + encodeURIComponent(this.options.username) +
+            '/storage/keys';
 
         this.pubkeys.setDefaultURL(base_url + '/pubkey');
         this.privkeys.setDefaultURL(base_url + '/privkey');
@@ -250,21 +157,6 @@ Weave.API = Class.create(/** @lends Weave.API */ {
                     )
                 }
             }
-        );
-    },
-
-    /**
-     * Perform an authenticated GET against the API, parsing the JSON payload
-     * in place first.
-     */
-    fetchWithPayload: function (url, on_success, on_failure) {
-        return this.fetch(
-            url,
-            function (data, resp) {
-                data.payload = data.payload.evalJSON();
-                on_success(data, resp);
-            },
-            on_failure
         );
     },
 
