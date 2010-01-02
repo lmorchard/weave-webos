@@ -147,10 +147,10 @@ Weave_Service_Tests.prototype = (function () {
             var chain = new Decafbad.Chain([
                 "_performLogin",
                 function (chain) {
-                    this.service.items.list(
+                    this.service.tabs.list(
                         { 
-                            "sort": "newest",
-                            "limit": 5
+                            sort: "newest",
+                            limit: 5
                         },
                         chain.nextCb(),
                         chain.errorCb('testListCollection, listCollection')
@@ -162,6 +162,24 @@ Weave_Service_Tests.prototype = (function () {
                         "There should be at least one item in the collection");
                     Mojo.require("string" == typeof collection_list[0],
                         "The first item in the list should be a string");
+                    chain.next();
+                },
+                function (chain) {
+                    this.service.tabs.list({
+                        sort: 'newest',
+                        limit: 5,
+                        full: true
+                    }, chain.nextCb(), chain.errorCb());
+                },
+                function (chain, objects) {
+                    Mojo.require(
+                        objects && Object.isArray(objects),
+                        "List result should be an array."
+                    );
+                    objects.each(function (object, idx) {
+                        Mojo.log("Object #%s: %s", idx, object.get('url'));
+                        Mojo.Log.logJSON(object);
+                    }, this);
                     chain.next();
                 },
                 function (chain) {
@@ -181,7 +199,7 @@ Weave_Service_Tests.prototype = (function () {
             var chain = new Decafbad.Chain([
                 "_performLogin",
                 function (chain) {
-                    this.service.items.list(
+                    this.service.history.list(
                         {
                             "sort": "newest",
                             "limit": 5
@@ -200,14 +218,15 @@ Weave_Service_Tests.prototype = (function () {
 
                         sub_chain.push([
                             function (sub_chain) {
-                                this.service.items.getByID(
+                                this.service.history.getByID(
                                     object_id,
                                     sub_chain.nextCb(),
                                     sub_chain.errorCb('fetching')
                                 );
                             },
                             function (sub_chain, object) {
-                                Mojo.log("FETCHED OBJECT %j", object);
+                                Mojo.log("FETCHED OBJECT %s", object.get('url'));
+                                Mojo.Log.logJSON(object);
                                 objects.push(object);
                                 Mojo.require('object' === typeof object,
                                     "Collection should yield an object");

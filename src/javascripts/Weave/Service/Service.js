@@ -23,10 +23,13 @@ Weave.Service = Class.create(/** @lends Weave.Service */ {
             "passphrase":  null
         }, options || {});
 
-        this.privkeys = new Weave.Service.PrivKeyManager(this);
-        this.pubkeys  = new Weave.Service.PubKeyManager(this);
-        this.symkeys  = new Weave.Service.SymKeyManager(this);
-        this.items    = new Weave.Service.CryptoObjectCollection(this);
+        this.privkeys  = new Weave.Service.PrivKeyManager(this);
+        this.pubkeys   = new Weave.Service.PubKeyManager(this);
+        this.symkeys   = new Weave.Service.SymKeyManager(this);
+
+        this.history   = new Weave.Service.Types.HistoryCollection(this);
+        this.bookmarks = new Weave.Service.Types.BookmarkCollection(this);
+        this.tabs      = new Weave.Service.Types.TabCollection(this);
     },
 
     /**
@@ -140,6 +143,7 @@ Weave.Service = Class.create(/** @lends Weave.Service */ {
      * in place first.
      */
     fetch: function (url, on_success, on_failure) {
+        Mojo.log("GET %s", url);
         var req = new Ajax.Request(
             url, 
             {

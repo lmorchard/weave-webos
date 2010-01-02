@@ -6,7 +6,7 @@
 /*jslint laxbreak: true */
 /*global Mojo, Weave, Chain, Class, Ajax */
 
-Weave.Service.BasicObject = Class.create(Decafbad.SiloObject, /** @lends Weave.Service.BasicObject */{
+Weave.Service.BasicObject = Class.create(Hash /*Decafbad.SiloObject*/, /** @lends Weave.Service.BasicObject */{
 
     /**
      * Weave basic object
@@ -25,7 +25,8 @@ Weave.Service.BasicObject = Class.create(Decafbad.SiloObject, /** @lends Weave.S
             payload: {}
         });
         this.manager = manager;
-        if (data) { this.update(data); }
+        if (data) { this.deserialize(data); }
+        this.set('url', url);
     },
 
     /**
@@ -34,10 +35,9 @@ Weave.Service.BasicObject = Class.create(Decafbad.SiloObject, /** @lends Weave.S
      * @param {string} json JSON string for deserialization
      */
     deserialize: function (json) {
-        this._object = ('string' === typeof json) ?
-            json.evalJSON() : json;
-        if (this._object.payload) {
-            this._object.payload = $H(this._object.payload.evalJSON());
+        this._object = Object.isString(json) ?  json.evalJSON() : json;
+        if (Object.isString(this._object.payload)) {
+            this._object.payload = this._object.payload.evalJSON();
         } else {
             this._object.deleted = true;
         }

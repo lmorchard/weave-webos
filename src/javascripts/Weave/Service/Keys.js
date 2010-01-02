@@ -174,11 +174,11 @@ Weave.Service.SymKey = Class.create(Weave.Service.BasicObject, /** @lends Weave.
                 }
             },
             function (chain, pubkey, privkey) {
-                var rsa_key = privkey.get('rsa_key'),
-                    key = this.get('payload').keyring[pubkey.get('url')],
-                    symkey = Weave.Util.intify(rsa_key.decrypt(
-                        Weave.Util.StH(Weave.Util.Base64.decode(key))
-                    ));
+                var rsa_key = privkey.get('rsa_key');
+                var key = this.get('payload').keyring[pubkey.get('url')];
+                var symkey = Weave.Util.intify(rsa_key.decrypt(
+                    Weave.Util.StH(Weave.Util.Base64.decode(key))
+                ));
                 this.set('symkey', symkey);
                 on_success(this);
             }

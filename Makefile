@@ -30,7 +30,8 @@ else
 	DEVICE=tcp
 	#UPDATE_TARGETS=kill-inspector remove restart launch launch-inspector tail-log
 	UPDATE_TARGETS=install launch tail-log
-	TESTS_TARGETS=launch-tests tail-log
+	#TESTS_TARGETS=launch-tests tail-log
+	TESTS_TARGETS=kill-inspector remove restart launch-tests launch-inspector tail-log
 endif
 
 all: update
@@ -82,7 +83,7 @@ launch: install
 
 launch-tests: install
 	#palm-launch -p "{ mojoTest:true }" -d $(DEVICE) $(APPID)
-	palm-launch -p "{ testsEnabled:true, runTestsAtLaunch:true }" -d $(DEVICE) $(APPID)
+	palm-launch -p "{ testsEnabled:true, runTestsAtLaunch:true }" -d $(DEVICE) -i $(APPID)
 
 kill-inspector:
 ifeq ($(OS),Darwin)
