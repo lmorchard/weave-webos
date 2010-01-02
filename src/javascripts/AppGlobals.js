@@ -73,6 +73,16 @@ var AppGlobals = (function () { /** @lends AppGlobals */
                 Mojo.log("Summary: %s", this.makeSummary(this.runner.results));
             };
 
+            // Workaround for palm-log choking on extra long lines (ie. over
+            // 850 chars) in JSON dumps
+            Mojo.Log.logJSON = function (o) {
+                var json = Object.toJSON(o);
+                while (json.length) {
+                    Mojo.log(json.substring(0,700));
+                    json = json.substring(700);
+                }
+            };
+
             this.app_menu_items.push(
                 { label: "Run Tests...", command: 'AppTests' }
             );
