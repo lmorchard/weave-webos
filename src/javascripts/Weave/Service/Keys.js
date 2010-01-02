@@ -17,12 +17,12 @@ Weave.Service.PubKey = Class.create(Weave.Service.BasicObject, /** @lends Weave.
 });
 
 /**
- * Manager of a set of public keys
+ * Collection of a set of public keys
  *
  * @class
- * @augments Weave.Service.RecordManager
+ * @augments Weave.Service.BasicCollection
  */
-Weave.Service.PubKeyManager = Class.create(Weave.Service.RecordManager, /** @lends Weave.Service.PubKeyManager */{
+Weave.Service.PubKeyCollection = Class.create(Weave.Service.BasicCollection, /** @lends Weave.Service.PubKeyCollection */{
 
     _record_type: Weave.Service.PubKey,
     _default_url: null,
@@ -112,12 +112,12 @@ Weave.Service.PrivKey = Class.create(Weave.Service.BasicObject, /** @lends Weave
 });
 
 /**
- * Manager of a set of private keys
+ * Collection of a set of private keys
  *
  * @class
- * @augments Weave.Service.PubKeyManager
+ * @augments Weave.Service.PubKeyCollection
  */
-Weave.Service.PrivKeyManager = Class.create(Weave.Service.PubKeyManager, /** @lends Weave.Service.PrivKeyManager */{
+Weave.Service.PrivKeyCollection = Class.create(Weave.Service.PubKeyCollection, /** @lends Weave.Service.PrivKeyCollection */{
     _record_type: Weave.Service.PrivKey,
 
     /**
@@ -155,8 +155,8 @@ Weave.Service.SymKey = Class.create(Weave.Service.BasicObject, /** @lends Weave.
      * @param {Weave.Service.PrivKey} privkey Private key
      */
     decrypt: function (pubkey, privkey, on_success, on_failure) {
-        var privkeys = this.manager.service.privkeys,
-            pubkeys  = this.manager.service.pubkeys;
+        var privkeys = this.collection.service.privkeys,
+            pubkeys  = this.collection.service.pubkeys;
 
         var chain = new Decafbad.Chain([
             function (chain) {
@@ -189,12 +189,12 @@ Weave.Service.SymKey = Class.create(Weave.Service.BasicObject, /** @lends Weave.
 });
 
 /**
- * Manager of a set of symmetric keys
+ * Collection of a set of symmetric keys
  *
  * @class
- * @augments Weave.Service.RecordManager
+ * @augments Weave.Service.BasicCollection
  */
-Weave.Service.SymKeyManager = Class.create(Weave.Service.RecordManager, /** @lends Weave.Service.SymKeyManager */{
+Weave.Service.SymKeyCollection = Class.create(Weave.Service.BasicCollection, /** @lends Weave.Service.SymKeyCollection */{
     _record_type: Weave.Service.SymKey,
 
     /**

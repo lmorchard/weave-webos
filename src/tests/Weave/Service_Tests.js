@@ -66,8 +66,10 @@ Weave_Service_Tests.prototype = (function () {
             var chain = new Decafbad.Chain([
                 "_performLogin",
                 function (chain) {
-                    Mojo.Log.error("PUB KEY %s", $H(this.service.pubkey).keys());
-                    Mojo.Log.error("PRIV KEY %s", $H(this.service.privkey).keys());
+                    Mojo.log("PUB KEY");
+                    Mojo.Log.logJSON(this.service.pubkey);
+                    Mojo.log("PRIV KEY");
+                    Mojo.Log.logJSON(this.service.privkey);
                     recordResults(Mojo.Test.passed);
                 }
             ], this).start();
@@ -147,7 +149,7 @@ Weave_Service_Tests.prototype = (function () {
             var chain = new Decafbad.Chain([
                 "_performLogin",
                 function (chain) {
-                    this.service.tabs.list(
+                    this.service.bookmarks.list(
                         { 
                             sort: "newest",
                             limit: 5
@@ -165,7 +167,7 @@ Weave_Service_Tests.prototype = (function () {
                     chain.next();
                 },
                 function (chain) {
-                    this.service.tabs.list({
+                    this.service.bookmarks.list({
                         sort: 'newest',
                         limit: 5,
                         full: true

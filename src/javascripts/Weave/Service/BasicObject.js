@@ -19,13 +19,9 @@ Weave.Service.BasicObject = Class.create(Hash /*Decafbad.SiloObject*/, /** @lend
      * @augments Decafbad.SiloObject
      * @author l.m.orchard@pobox.com
      */
-    initialize: function ($super, manager, url, data) {
-        $super({
-            url: url,
-            payload: {}
-        });
-        this.manager = manager;
+    initialize: function ($super, collection, url, data) {
         if (data) { this.deserialize(data); }
+        this.collection = collection;
         this.set('url', url);
     },
 
@@ -35,11 +31,10 @@ Weave.Service.BasicObject = Class.create(Hash /*Decafbad.SiloObject*/, /** @lend
      * @param {string} json JSON string for deserialization
      */
     deserialize: function (json) {
-        this._object = Object.isString(json) ?  json.evalJSON() : json;
+        this._object = Object.isString(json) ? 
+            json.evalJSON() : Object.clone(json);
         if (Object.isString(this._object.payload)) {
             this._object.payload = this._object.payload.evalJSON();
-        } else {
-            this._object.deleted = true;
         }
     },
 
@@ -47,13 +42,13 @@ Weave.Service.BasicObject = Class.create(Hash /*Decafbad.SiloObject*/, /** @lend
 
 });
 
-Weave.Service.RecordManager = Class.create(/** @lends Weave.Service.RecordManager */{
+Weave.Service.BasicCollection = Class.create(/** @lends Weave.Service.BasicCollection */{
 
     /** Class to be instantiated for each record fetched. */
     _record_type: Weave.Service.BasicObject,
 
     /**
-     * Manager of a set of weave basic objects
+     * collection of a set of weave basic objects
      * 
      * @param {Weave.Service} service Instance of Weave.Service
      *
@@ -88,7 +83,7 @@ Weave.Service.RecordManager = Class.create(/** @lends Weave.Service.RecordManage
     },
 
     /**
-     * Retrieve a record from the manager cache, forcing a fetch if the record
+     * Retrieve a record from the collection cache, forcing a fetch if the record
      * is not found.
      *
      * @param {string}   url        URL of the record to fetch
@@ -104,14 +99,14 @@ Weave.Service.RecordManager = Class.create(/** @lends Weave.Service.RecordManage
     },
 
     /**
-     * Store a record in the manager cache at the given URL.
+     * Store a record in the collection cache at the given URL.
      *
      * @param {string} url URL for record
      * @param {Weave.Service.BasicObject} record Record to store
      */
     set: function (url, record) {
         this._records[url] = record;
-        record.manager = this;
+        record.collection = this;
         return record;
     },
 

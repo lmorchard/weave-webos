@@ -92,6 +92,5 @@ endif
 
 launch-inspector:
 ifeq ($(OS),Darwin)
-	sleep 3; 
 	open -g -a Palm\ Inspector;
 endif

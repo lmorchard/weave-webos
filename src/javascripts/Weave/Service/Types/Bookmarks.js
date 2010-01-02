@@ -30,9 +30,9 @@ Weave.Service.Types.BookmarkObject = Class.create(Weave.Service.CryptoObject, /*
 /**
  *
  * @class
- * @augments Weave.Service.CryptoObjectCollection
+ * @augments Weave.Service.CryptoCollection
  */
-Weave.Service.Types.BookmarkCollection = Class.create(Weave.Service.CryptoObjectCollection, /** @lends Weave.Service.Types.BookmarkObject */{
+Weave.Service.Types.BookmarkCollection = Class.create(Weave.Service.CryptoCollection, /** @lends Weave.Service.Types.BookmarkObject */{
     _collection_name: 'bookmarks',
     _record_type: Weave.Service.Types.BookmarkObject,
     EOF:null

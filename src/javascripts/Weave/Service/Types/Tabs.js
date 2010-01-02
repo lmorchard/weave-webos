@@ -30,9 +30,9 @@ Weave.Service.Types.TabObject = Class.create(Weave.Service.CryptoObject, /** @le
 /**
  *
  * @class
- * @augments Weave.Service.CryptoObjectCollection
+ * @augments Weave.Service.CryptoCollection
  */
-Weave.Service.Types.TabCollection = Class.create(Weave.Service.CryptoObjectCollection, /** @lends Weave.Service.Types.TabObject */{
+Weave.Service.Types.TabCollection = Class.create(Weave.Service.CryptoCollection, /** @lends Weave.Service.Types.TabObject */{
     _collection_name: 'tabs',
     _record_type: Weave.Service.Types.TabObject,
     EOF:null

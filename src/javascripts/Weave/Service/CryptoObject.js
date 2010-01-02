@@ -67,7 +67,7 @@ Weave.Service.CryptoObject = Class.create(Weave.Service.BasicObject, /** @lends 
                 if (symkey) {
                     chain.next(symkey);
                 } else {
-                    this.manager.service.symkeys.get(
+                    this.collection.service.symkeys.get(
                         this.get('payload').encryption,
                         chain.nextCb(), chain.errorCb()
                     );
@@ -93,9 +93,9 @@ Weave.Service.CryptoObject = Class.create(Weave.Service.BasicObject, /** @lends 
 
 /**
  * @class 
- * @augments Weave.Service.RecordManager
+ * @augments Weave.Service.BasicCollection
  */
-Weave.Service.CryptoObjectCollection = Class.create(Weave.Service.RecordManager, /** @lends Weave.Service.CryptoObjectCollection */ {
+Weave.Service.CryptoCollection = Class.create(Weave.Service.BasicCollection, /** @lends Weave.Service.CryptoCollection */ {
 
     _collection_name: 'history',
     _record_type: Weave.Service.CryptoObject,

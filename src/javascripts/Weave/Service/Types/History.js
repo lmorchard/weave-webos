@@ -30,9 +30,9 @@ Weave.Service.Types.HistoryObject = Class.create(Weave.Service.CryptoObject, /**
 /**
  *
  * @class
- * @augments Weave.Service.CryptoObjectCollection
+ * @augments Weave.Service.CryptoCollection
  */
-Weave.Service.Types.HistoryCollection = Class.create(Weave.Service.CryptoObjectCollection, /** @lends Weave.Service.Types.HistoryObject */{
+Weave.Service.Types.HistoryCollection = Class.create(Weave.Service.CryptoCollection, /** @lends Weave.Service.Types.HistoryObject */{
     _collection_name: 'history',
     _record_type: Weave.Service.Types.HistoryObject,
     EOF:null
