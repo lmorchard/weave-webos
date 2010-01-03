@@ -28,11 +28,11 @@ Weave.Storage.Silo = Class.create(Decafbad.Silo, /** @lends Weave.Storage.Silo *
     getLastModified: function (on_success, on_failure) {
         this.db.transaction(function (tx) {
             tx.executeSql(
-                'SELECT MAX(modified) AS last_modified FROM ' + this.table_name, 
+                'SELECT MAX(modified) AS last_modified FROM ' + this.table_name,
                 [],
                 function (tx, rs) {
                     on_success(rs.rows.item(0).last_modified);
-                }, 
+                },
                 on_failure
             );
         }.bind(this), on_failure);
