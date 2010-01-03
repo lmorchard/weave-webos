@@ -5,16 +5,6 @@
  */
 /*jslint laxbreak: true */
 /*global Mojo, $L, $H, SimpleDateFormat */
-var Decafbad = (function () { /** @lends Decafbad */
 
-    return {
-
-        init: function () {
-
-            return this;
-        },
-
-        EOF: null
-    };
-
-}().init());
+/** @namespace */
+Decafbad = {};
