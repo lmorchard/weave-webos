@@ -148,13 +148,12 @@ Weave.Service = Class.create(/** @lends Weave.Service */ {
      * payload in place first.
      */
     fetch: function (url, on_success, on_failure) {
-        Mojo.log("GET %s", url);
+        Mojo.Log.logJSON("GET " + url);
         var req = new Ajax.Request(
             url, 
             {
                 evalJSON: "force",
                 onSuccess: function (req) {
-                    Mojo.Log.logJSON(req.responseText);
                     var data = req.responseJSON;
                     on_success(data, req);
                 }.bind(this),
