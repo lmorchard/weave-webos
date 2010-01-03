@@ -29,12 +29,12 @@ Weave.Service.Types.HistoryObject = Class.create(Weave.Service.CryptoObject, /**
         id:             'id',
         histUri:        'histUri',
         title:          'title',
-        visit_count:    'visit_count',
-        frecency:       'frecency',
-        sortindex:      'sortindex',
-        modified:       'modified',
-        local_created:  'local_created',
-        local_modified: 'local_modified'
+        visit_count:    ['visit_count', 'NUMERIC'],
+        frecency:       ['frecency', 'NUMERIC'],
+        sortindex:      ['sortindex', 'NUMERIC'],
+        modified:       ['modified', 'NUMERIC'],
+        local_created:  ['local_created', 'NUMERIC'],
+        local_modified: ['local_modified', 'NUMERIC']
     },
     get_visit_count: function () {
         var visits = this.get('$.payload.cleartext.0.visits');
