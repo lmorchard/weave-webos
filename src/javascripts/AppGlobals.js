@@ -77,7 +77,7 @@ var AppGlobals = (function () { /** @lends AppGlobals */
             // 850 chars) in JSON dumps
             Mojo.Log.logJSON = function (o) {
                 var json = Object.toJSON(o);
-                while (json.length) {
+                while (json && json.length) {
                     Mojo.log(json.substring(0,700));
                     json = json.substring(700);
                 }
