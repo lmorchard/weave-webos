@@ -118,7 +118,7 @@ Decafbad.Silo = Class.create(/** @lends Decafbad.Silo */{
     row_class: Decafbad.SiloObject,
 
     /**
-     * Databse table abstraction with object wrappers
+     * Database table abstraction with object wrappers
      *
      * @see Decafbad.SiloObject
      * @constructs
@@ -313,16 +313,31 @@ Decafbad.Silo = Class.create(/** @lends Decafbad.Silo */{
         var sql, cols = [], vals = [], is_insert;
 
         if (Object.isArray(obj)) {
+
             // If the object is an array, assume it's a set to be saved.
+            var all_saved = [];
             var chain = new Decafbad.Chain([], this, on_failure);
             obj.each(function (sub_obj) {
                 // Queue a save for each individual item in the set.
-                chain.push(function (chain) {
-                    this.save(sub_obj, chain.nextCb(), chain.errorCb());
-                });
+                chain.push([
+                    function (chain) {
+                        // Save this object...
+                        this.save(sub_obj, chain.nextCb(), chain.errorCb());
+                    },
+                    function (chain, saved) {
+                        // Accumulate this saved object and move on.
+                        all_saved.push(saved);
+                        chain.next();
+                    }
+                ]);
             }, this);
+
             // Finally, queue up on_success and start.
-            return chain.push(on_success).start();
+            return chain.push(function () {
+                // Yield the set of all saved objects.
+                on_success(all_saved);
+            }).start();
+
         }
 
         if ('beforeSave' in obj) {
