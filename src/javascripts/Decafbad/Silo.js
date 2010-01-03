@@ -312,6 +312,19 @@ Decafbad.Silo = Class.create(/** @lends Decafbad.Silo */{
     save: function (obj, on_success, on_failure) {
         var sql, cols = [], vals = [], is_insert;
 
+        if (Object.isArray(obj)) {
+            // If the object is an array, assume it's a set to be saved.
+            var chain = new Decafbad.Chain([], this, on_failure);
+            obj.each(function (sub_obj) {
+                // Queue a save for each individual item in the set.
+                chain.push(function (chain) {
+                    this.save(sub_obj, chain.nextCb(), chain.errorCb());
+                });
+            }, this);
+            // Finally, queue up on_success and start.
+            return chain.push(on_success).start();
+        }
+
         if ('beforeSave' in obj) {
             // If the object has a beforeSave handler, call it.
             obj.beforeSave(this);
