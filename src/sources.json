@@ -1,4 +1,6 @@
 [
+    {"source": "javascripts/dojo/dojo.js"},
+
     {"source": "javascripts/vendor/Math.uuid.js"},
     {"source": "javascripts/vendor/date-iso8601.js"},
     {"source": "javascripts/vendor/jsonpath-0.8.0.js"},
