@@ -15,7 +15,7 @@ Weave_Sync_Tests.service = new Weave.Service({
     passphrase: Weave.TestData.auth.passphrase
 }); 
 
-Weave_Sync_Tests.sync = new Weave.Sync({
+Weave_Sync_Tests.sync = new Weave.Sync.HistorySync({
     service: Weave_Sync_Tests.service
 });
 
@@ -42,79 +42,65 @@ Weave_Sync_Tests.prototype = (function () {
         },
 
         /**
+         *
          */
         testHistorySync: function (recordResults) {
             var g = {};
             var chain = new Decafbad.Chain([
                 "_resetSync", "_performLogin",
                 function (ch) {
+                    this.sync.startSync(
+                        function (str) {
+                            Mojo.log("[sync] %s", str);
+                        },
+                        chain.nextCb(), chain.errorCb()
+                    );
+                },
+                /*
+                function (ch) {
                     // List collections to get last mod times.
-                    this.service.listAllCollections(ch.nextCb(), ch.errorCb());
+                    this.sync.service.listAllCollections(ch.nextCb(), ch.errorCb());
                 },
                 function (ch, collections) {
                     // Plan to grab entries from 2 days ago.
                     g.mod_time = collections.history / 1000;
-                    g.start_time = g.mod_time - (2 * 24 * 60 * 60);
+                    g.start_time = g.mod_time - (3 * 24 * 60 * 60);
+                    Mojo.log("Newest item at " + g.mod_time);
 
-                    g.dt = new Date();
-                    g.dt.setTime(g.start_time * 1000);
-                    Mojo.log("Seeking items since " + g.dt + '...');
+                    this.sync.silo.getLastModified(ch.nextCb(), ch.errorCb());
+                },
+                function (ch, results) {
+                    Mojo.log("Silo last modified %s", results);
+                    Mojo.log("Seeking items since " + g.start_time + '...');
 
-                    this.service.history.list({
-                        sort: 'newer',
-                        newer: g.start_time
+                    this.sync.service.history.list({
+                        sort: 'newer', newer: g.start_time
                     }, ch.nextCb(), ch.errorCb());
                 },
                 function (ch, id_list) {
                     Mojo.log("Found " + id_list.length + " items");
 
-                    this.service.history.list({
-                        full: true,
-                        limit: 25, 
-                        sort: 'newer',
-                        newer: g.start_time
+                    this.sync.collection.list({
+                        full: true, limit: 30, sort: 'newer', newer: g.start_time
                     }, ch.nextCb(), ch.errorCb());
                 },
                 function (ch, results) {
-                    var s_ch = new Decafbad.Chain([], this);
-
-                    results.each(function (item) {
-                        s_ch.push([
-                            function (s_ch) {
-                                this.sync.silos.history
-                                    .save(item, s_ch.nextCb(), s_ch.errorCb());
-                            },
-                            function (s_ch, obj) {
-                                Mojo.log('TITLE: '+obj.get('title'));
-                                //Mojo.log('URL: '+obj.get('histUri'));
-                                s_ch.next();
-                            }
-                        ]);
-                    }, this);
-
-                    s_ch.push(function (s_ch) { ch.next(); });
-                    s_ch.start();
+                    this.sync.silo.save(results, ch.nextCb(), ch.errorCb());
                 },
                 function (ch) {
-
-                    var db = this.sync.silos.history.db,
-                        table_name = this.sync.silos.history.table_name;
-                    db.transaction(function (tx) {
-                        tx.executeSql(
-                            'SELECT COUNT(*) AS count FROM ' + table_name, [],
-                            function (tx, rs) {
-                                var i, l, rows = rs.rows;
-                                for (i=0,l=rows.length; i<l; i++) {
-                                    var row = rows.item(i);
-                                    Mojo.Log.logJSON(row);
-                                }
-                                ch.next();
-                            },
-                            ch.errorCb()
-                        );
-                    });
-
+                    this.sync.silo.query([], [], ch.nextCb(), ch.errorCb());
                 },
+                function (ch, results) {
+                    results.each(function (item) {
+                        Mojo.log("TITLE: %s", item.get('title'));
+                    }, this);
+                    Mojo.log("Found %s items in DB", results.length);
+                    this.sync.silo.getLastModified(ch.nextCb(), ch.errorCb());
+                },
+                function (ch, results) {
+                    Mojo.log("Silo last modified %s", results);
+                },
+                */
                 function (ch) {
                     recordResults(Mojo.Test.passed);
                 }
@@ -126,25 +112,17 @@ Weave_Sync_Tests.prototype = (function () {
          * Reset all the sync silos before a test.
          */
         _resetSync: function (chain) {
-            var sub_chain = new Decafbad.Chain([], this);
-            
-            /*
-            $H(this.sync.silos).each(function (pair) {
-                sub_chain.push(function (sc) {
-                    Mojo.log("Resetting %s silo...", pair.key);
-                    pair.value.resetAll(sc.nextCb(), chain.errorCb());
-                });
-            }, this);
-            */
-
-            sub_chain.push([
+            var sub_chain = new Decafbad.Chain([
+                function (sc) {
+                    this.sync.silo.resetAll(sc.nextCb(), sc.errorCb());
+                },
                 function (sc) {
                     this.sync.open(sc.nextCb(), sc.errorCb());
                 },
                 function (sc) {
                     chain.next();
                 }
-            ]).start();
+            ], this).start();
         },
 
         /**

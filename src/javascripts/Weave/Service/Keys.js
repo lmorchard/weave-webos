@@ -161,6 +161,10 @@ Weave.Service.SymKey = Class.create(Weave.Service.BasicObject, /** @lends Weave.
      * @param {Weave.Service.PrivKey} privkey Private key
      */
     decrypt: function (pubkey, privkey, on_success, on_failure) {
+        if (!this.get('payload')) {
+            on_success(this);
+        }
+
         var privkeys = this.collection.service.privkeys,
             pubkeys  = this.collection.service.pubkeys;
 
