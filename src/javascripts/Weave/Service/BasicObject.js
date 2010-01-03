@@ -24,8 +24,10 @@ Weave.Service.BasicObject = Class.create(Decafbad.SiloObject, /** @lends Weave.S
             data = json.evalJSON();
         }
         $super(data);
-        if (Object.isString(this._object.payload)) {
+        if (this._object.payload && Object.isString(this._object.payload)) {
             this._object.payload = this._object.payload.evalJSON();
+        } else {
+            this._object.payload = null;
         }
         if (url) {
             this.set('url', url);

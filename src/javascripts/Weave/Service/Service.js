@@ -153,11 +153,17 @@ Weave.Service = Class.create(/** @lends Weave.Service */ {
             url, 
             {
                 evalJSON: "force",
-                onSuccess: function (resp) {
-                    var data = resp.responseJSON;
-                    on_success(data, resp);
+                onSuccess: function (req) {
+                    Mojo.Log.logJSON(req.responseText);
+                    var data = req.responseJSON;
+                    on_success(data, req);
                 }.bind(this),
                 onFailure: on_failure,
+                onException: function (req, e) {
+                    Mojo.Log.error("AJAX Exception!");
+                    Mojo.Log.logException(e);
+                    Mojo.Log.logJSON(req.responseText);
+                },
                 requestHeaders: {
                     Authorization: "Basic " + Weave.Util.Base64.encode(
                         this.options.username + ':' + this.options.password

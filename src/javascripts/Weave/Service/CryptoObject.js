@@ -30,6 +30,12 @@ Weave.Service.CryptoObject = Class.create(Weave.Service.BasicObject, /** @lends 
     decrypt: function (symkey, on_success, on_failure) {
         var chain = new Decafbad.Chain([
             function (chain) {
+
+                if (!this.get('payload')) {
+                    // TODO: Maybe do something better here on missing payload?
+                    return on_success(this);
+                }
+
                 // Use the supplied symkey, or fetch the one specified in the
                 // payload if none supplied.
                 if (symkey) {
@@ -102,9 +108,9 @@ Weave.Service.CryptoCollection = Class.create(Weave.Service.BasicCollection, /**
             params.record_type : this._record_type;
         delete params.record_type;
 
-        if ('ids' in params) {
+        if ('ids' in params && Object.isArray(params.ids)) {
             // Expect an array of IDs, join to comma-separated string.
-            params.ids = join(',', param.ids);
+            params.ids = params.ids.join(',');
         }
 
         var base_url = this.service.cluster_url + 
