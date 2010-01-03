@@ -344,7 +344,9 @@ Decafbad.Silo = Class.create(/** @lends Decafbad.Silo */{
         // Gather the table column values from object data.
         Object.keys(obj.table_columns).each(function (col_name) {
             cols.push(col_name);
-            vals.push(obj.get(obj.table_columns[col_name]));
+            var col_def = obj.table_columns[col_name],
+                prop_name = Object.isArray(col_def) ? col_def[0] : col_def;
+            vals.push(obj.get(prop_name));
         });
 
         // Shove the JSON into the list of columns and values;
@@ -457,10 +459,11 @@ Decafbad.Silo = Class.create(/** @lends Decafbad.Silo */{
         }
 
         // Create TEXT columns for all others besides id
-        Object.keys(row_proto.table_columns).each(function (column_name) {
-            if ('id' === column_name) { return; }
-            // TODO: Allow different types for extracted columns someday?
-            schema_cols.push("'"+column_name+"' TEXT");
+        Object.keys(row_proto.table_columns).each(function (col_name) {
+            if ('id' === col_name) { return; }
+            var col_def = row_proto.table_columns[col_name],
+                col_type = Object.isArray(col_def) ? col_def[1] : 'TEXT';
+            schema_cols.push("'"+col_name+"' "+col_type);
         }, this);
 
         // Create a BLOB column for the JSON serialization.

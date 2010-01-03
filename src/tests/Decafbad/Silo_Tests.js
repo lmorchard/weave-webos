@@ -14,7 +14,6 @@ Decafbad_Silo_Tests.timeoutInterval = 5000;
 Decafbad_Silo_Tests.prototype = (function () {
 
     var TestSilo = Class.create(Decafbad.Silo, {
-        db_name: 'tests',
         table_name: 'test_objects',
         meta_table_name: 'test_silo_meta',
         row_class: Class.create(Decafbad.SiloObject, {
@@ -30,6 +29,28 @@ Decafbad_Silo_Tests.prototype = (function () {
             },
             get_pets_count: function($super) {
                 return $H(this.get('pets')).keys().length;
+            }
+        })
+    });
+
+    var TestSiloTextCol = Class.create(Decafbad.Silo, {
+        table_name: 'test_objects_text',
+        meta_table_name: 'test_silo_meta',
+        row_class: Class.create(Decafbad.SiloObject, {
+            table_columns: {
+                name: 'name',
+                num: 'num'
+            }
+        })
+    });
+
+    var TestSiloNumericCol = Class.create(Decafbad.Silo, {
+        table_name: 'test_objects_numeric',
+        meta_table_name: 'test_silo_meta',
+        row_class: Class.create(Decafbad.SiloObject, {
+            table_columns: {
+                name: 'name',
+                num: ['num', 'NUMERIC']
             }
         })
     });
@@ -73,8 +94,6 @@ Decafbad_Silo_Tests.prototype = (function () {
          * Exercise opening the silo and verify version
          */
         testOpenAndVersion: function (recordResults) {
-            Mojo.log('testOpen');
-
             var $this = this, 
                 chain = new Decafbad.Chain([], this, function () {
                     Mojo.Log.error("Failed! %j", $A(arguments));
@@ -109,8 +128,6 @@ Decafbad_Silo_Tests.prototype = (function () {
          * Exercise simple object saving and find
          */
         testSaveFindQuery: function (recordResults) {
-            Mojo.log('testSave');
-
             var $this = this, 
                 chain = new Decafbad.Chain([], this, function () {
                     Mojo.Log.error("Failed! %j", $A(arguments));
@@ -275,6 +292,106 @@ Decafbad_Silo_Tests.prototype = (function () {
             }, this);
 
             recordResults(Mojo.Test.passed); 
+        },
+
+        /**
+         * Exercise TEXT versus NUMERIC columns and sort order.
+         */
+        testColumnTypesOrder: function (recordResults) {
+
+            var new_data = [
+                [ 'a', '88' ],
+                [ 'b', '99.9' ],
+                [ 'c', '999.99' ],
+                [ 'd', '1000.1000' ],
+                [ 'e', '10000.10000' ]
+            ];
+
+            var expected_text_order = 'deabc';
+            var expected_numeric_order = 'abcde';
+
+            var text_silo = new TestSiloTextCol();
+            var num_silo = new TestSiloNumericCol();
+
+            var chain = new Decafbad.Chain([
+                function (ch) {
+                    text_silo.resetAll(ch.nextCb(), ch.errorCb());
+                },
+                function (ch) {
+                    text_silo.open(ch.nextCb(), ch.errorCb());
+                },
+                function (ch) {
+                    var sub_ch = new Decafbad.Chain([], this);
+                    new_data.each(function (data) {
+                        sub_ch.push(function (sub_ch) {
+                            text_silo
+                                .factory({ name: data[0], num: data[1] })
+                                .save(sub_ch.nextCb(), sub_ch.errorCb());
+                        });
+                    }, this);
+                    sub_ch.push(ch.nextCb()).start();
+                },
+                function (ch) {
+                    Mojo.log("Checking TEXT order:");
+                    text_silo.query(
+                        [ 'ORDER BY num ASC' ], [],
+                        ch.nextCb(), ch.errorCb()
+                    );
+                },
+                function (ch, results) {
+                    var result_order = '';
+                    results.each(function (result) {
+                        Mojo.log('%s = %s', result.get('name'), result.get('num'));
+                        result_order += result.get('name');
+                    });
+                    Mojo.log("Order = %s", result_order);
+                    ch.next(result_order);
+                },
+                function (ch, result_order) {
+                    Mojo.assertEqual(expected_text_order, result_order);
+                    ch.next();
+                },
+                function (ch) {
+                    num_silo.resetAll(ch.nextCb(), ch.errorCb());
+                },
+                function (ch) {
+                    num_silo.open(ch.nextCb(), ch.errorCb());
+                },
+                function (ch) {
+                    var sub_ch = new Decafbad.Chain([], this);
+                    new_data.each(function (data) {
+                        sub_ch.push(function (sub_ch) {
+                            num_silo
+                                .factory({ name: data[0], num: data[1] })
+                                .save(sub_ch.nextCb(), sub_ch.errorCb());
+                        });
+                    }, this);
+                    sub_ch.push(ch.nextCb()).start();
+                },
+                function (ch) {
+                    Mojo.log("Checking NUMERIC order:");
+                    num_silo.query(
+                        [ 'ORDER BY num ASC' ], [],
+                        ch.nextCb(), ch.errorCb()
+                    );
+                },
+                function (ch, results) {
+                    var result_order = '';
+                    results.each(function (result) {
+                        Mojo.log('%s = %s', result.get('name'), result.get('num'));
+                        result_order += result.get('name');
+                    });
+                    Mojo.log("Order = %s", result_order);
+                    ch.next(result_order);
+                },
+                function (ch, result_order) {
+                    Mojo.assertEqual(expected_numeric_order, result_order);
+                    ch.next();
+                },
+                function (ch) {
+                    recordResults(Mojo.Test.passed);
+                }
+            ], this).start();
         },
 
         /**
