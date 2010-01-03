@@ -67,9 +67,9 @@ Weave_Service_Tests.prototype = (function () {
                 "_performLogin",
                 function (chain) {
                     Mojo.log("PUB KEY");
-                    Mojo.Log.logJSON(this.service.pubkey);
+                    //Mojo.Log.logJSON(this.service.pubkey);
                     Mojo.log("PRIV KEY");
-                    Mojo.Log.logJSON(this.service.privkey);
+                    //Mojo.Log.logJSON(this.service.privkey);
                     recordResults(Mojo.Test.passed);
                 }
             ], this).start();

@@ -30,7 +30,7 @@ else
 	DEVICE=tcp
 	#UPDATE_TARGETS=kill-inspector remove restart launch launch-inspector tail-log
 	UPDATE_TARGETS=install launch tail-log
-	TESTS_TARGETS=launch-tests tail-log
+	TESTS_TARGETS=remove launch-tests tail-log
 	#TESTS_TARGETS=kill-inspector remove restart launch-tests launch-inspector tail-log
 endif
 

@@ -104,10 +104,6 @@ Decafbad.SiloObject = Class.create(Hash, /** @lends Decafbad.SiloObject */{
 
 Decafbad.Silo = Class.create(/** @lends Decafbad.Silo */{
 
-    /** Name of the silo's database */
-    db_name: 'silo',
-    /** Version of the silo's database */
-    db_version: '0',
     /** Estimated size of the silo's database */
     db_size: 1 * 1024 * 1024,
     /** Name of the silo's DB table */
@@ -146,9 +142,8 @@ Decafbad.Silo = Class.create(/** @lends Decafbad.Silo */{
             });
         
         // Try opening the database, bail on error.
-        this.db = openDatabase(this.db_name, this.db_version, this.db_name,
-            this.db_size);
-        if (!this.db) { on_failure(); }
+        this.db = openDatabase('silo', '1', 'silo', this.db_size);
+        if (!this.db) { return on_failure("Failed to open DB"); }
 
         // Check the table version, creating or upgrading it if necessary.
         chain.push([
@@ -194,9 +189,8 @@ Decafbad.Silo = Class.create(/** @lends Decafbad.Silo */{
                 use_timeouts: false
             });
 
-        this.db = openDatabase(
-            this.db_name, this.db_version, this.db_name, this.db_size
-        );
+        this.db = openDatabase('silo', '1', 'silo', this.db_size);
+        if (!this.db) { return on_failure("Failed to open DB for reset"); }
 
         var stmts = [
             'DELETE FROM '+this.meta_table_name+' WHERE table_name="'+this.table_name+'"',
@@ -205,6 +199,8 @@ Decafbad.Silo = Class.create(/** @lends Decafbad.Silo */{
         stmts.each(function (stmt) {
             chain.push(function (chain, tx) {
                 // tx.executeSql(stmt, [], chain.nextCb(tx), on_failure);
+                // HACK: Forge ahead with queries no matter what, since the
+                // meta table might not exist, and we just want to nuke things.
                 tx.executeSql(stmt, [], chain.nextCb(tx), chain.nextCb(tx));
             });
         });
