@@ -30,6 +30,7 @@ Weave.Service = Class.create(/** @lends Weave.Service */ {
         this.history   = new Weave.Service.Types.HistoryCollection(this);
         this.bookmarks = new Weave.Service.Types.BookmarkCollection(this);
         this.tabs      = new Weave.Service.Types.TabCollection(this);
+
         /* TODO:
          * passwords
          * forms
@@ -143,8 +144,8 @@ Weave.Service = Class.create(/** @lends Weave.Service */ {
     },
 
     /**
-     * Perform an authenticated GET against the service, parsing the JSON payload
-     * in place first.
+     * Perform an authenticated GET against the service, parsing the JSON 
+     * payload in place first.
      */
     fetch: function (url, on_success, on_failure) {
         Mojo.log("GET %s", url);
@@ -154,8 +155,6 @@ Weave.Service = Class.create(/** @lends Weave.Service */ {
                 evalJSON: "force",
                 onSuccess: function (resp) {
                     var data = resp.responseJSON;
-                    this.data = data;
-                    this.response = resp;
                     on_success(data, resp);
                 }.bind(this),
                 onFailure: on_failure,

@@ -75,6 +75,7 @@ Weave.Service.PrivKey = Class.create(Weave.Service.BasicObject, /** @lends Weave
         var chain = new Decafbad.Chain([
             function (chain) {
 
+                // Generate symmetric key based on passphrase
                 var pkcs5_key = Weave.Crypto.PKCS5.generate(
                     passphrase,
                     Weave.Util.Base64.decode(this.get('payload').salt),

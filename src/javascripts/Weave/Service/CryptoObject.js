@@ -14,38 +14,6 @@
  */
 Weave.Service.CryptoObject = Class.create(Weave.Service.BasicObject, /** @lends Weave.Service.CryptoObject */{
 
-    _object_map: null,
-
-    extract: function ($super) {
-        if (!this._object_map) {
-            var flattened = Object.clone(this._object);
-            if (flattened.payload && flattened.payload.cleartext) {
-                cleartext = Object.clone(flattened.payload.cleartext[0]);
-                delete flattened.payload.cleartext;
-                delete flattened.payload;
-                flattened = Object.extend(flattened, cleartext);
-            }
-            return flattened;
-        } else {
-            var mapped = {};
-            this._extract_map.each(function (pair) {
-                mapped[pair.key] = this.get(pair.value);
-            }, this);
-            return mapped;
-        }
-    },
-
-    /**
-     *
-     */
-    get: function ($super, key) {
-        if ('$'===(''+key).substr(0,1)) {
-            return jsonPath(this._object, key)[0];
-        } else {
-            return $super(key);
-        }
-    },
-
     /**
      * TODO:
     encrypt: function (on_success, on_failure) {
@@ -82,6 +50,7 @@ Weave.Service.CryptoObject = Class.create(Weave.Service.BasicObject, /** @lends 
                 ));
                 this.get('payload').cleartext = json.evalJSON();
                 delete this.get('payload').ciphertext;
+                delete this.get('payload').encryption;
                 on_success(this);
             }
         ], this, on_failure).start();
@@ -133,6 +102,11 @@ Weave.Service.CryptoCollection = Class.create(Weave.Service.BasicCollection, /**
             params.record_type : this._record_type;
         delete params.record_type;
 
+        if ('ids' in params) {
+            // Expect an array of IDs, join to comma-separated string.
+            params.ids = join(',', param.ids);
+        }
+
         var base_url = this.service.cluster_url + 
                 this.service.options.service_version + 
                 '/' + encodeURIComponent(this.service.options.username) + 
@@ -160,14 +134,13 @@ Weave.Service.CryptoCollection = Class.create(Weave.Service.BasicCollection, /**
                     return chain.next(results); 
                 }
 
-                // Wrap each JSON item in the service results with an
-                // appropriate object instance and queue each up for decryption
-                // in a chain.
+                // Wrap each service result item with an appropriate object
+                // instance and queue each up for decryption.
                 var objects = [],
                     sub_chain = new Decafbad.Chain([], this, on_failure);
                 results.each(function (data, idx) {
                     var url = base_url + '/' + data.id,
-                        record = new this._record_type(this, url, data);
+                        record = new this._record_type(data, this, url);
                     sub_chain.push([
                         function (sub_chain) {
                             // Decrypt the record.

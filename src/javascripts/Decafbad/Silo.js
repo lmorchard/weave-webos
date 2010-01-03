@@ -6,6 +6,13 @@
 /*jslint laxbreak: true */
 /*global Mojo, Weave, Chain, Class, Ajax */
 
+/**
+ * Object wrapper for DB rows
+ *
+ * @author l.m.orchard@pobox.com
+ * @augments Hash
+ * @class
+ */
 Decafbad.SiloObject = Class.create(Hash, /** @lends Decafbad.SiloObject */{
 
     /** Version of the object in the DB */
@@ -21,19 +28,28 @@ Decafbad.SiloObject = Class.create(Hash, /** @lends Decafbad.SiloObject */{
         'modified': 'modified' 
     },
 
+    /** Map of property names aliased to other properties or jsonPaths */
+    property_aliases: { },
+
     /** Name of the table column that receives the JSON blob */
     blob_column: 'json',
 
     /**
-     * Object wrapper for DB rows
-     * @constructs
-     * @augments Hash
-     * @author l.m.orchard@pobox.com
-     *
-     * @param {Object}        data DB row data / object data
+     * Enhancement to Hash.get() that looks for get_{key} methods for
+     * by-property delegate handlers.
      */
-    initialize: function ($super, data) {
-        $super(data);
+    get: function ($super, key) {
+        if (key in this.property_aliases) {
+            key = this.property_aliases[key];
+        }
+        if ('$'===(''+key).substr(0,1)) {
+            return jsonPath(this._object, key)[0];
+        }
+        var fn_name = 'get_'+key;
+        if ('function' === typeof this[fn_name]) {
+            return this[fn_name]($super);
+        }
+        return $super(key);
     },
 
     /**
@@ -41,6 +57,13 @@ Decafbad.SiloObject = Class.create(Hash, /** @lends Decafbad.SiloObject */{
      * by-property delegate handlers.
      */
     set: function ($super, key, value) {
+        if (key in this.property_aliases) {
+            key = this.property_aliases[key];
+        }
+        if ('$'===(''+key).substr(0,1)) {
+            // TODO: Can't set by jsonPath yet.
+            return false;
+        }
         var fn_name = 'set_'+key;
         if ('function' === typeof this[fn_name]) {
             return this[fn_name]($super, value);
@@ -49,15 +72,31 @@ Decafbad.SiloObject = Class.create(Hash, /** @lends Decafbad.SiloObject */{
     },
 
     /**
-     * Enhancement to Hash.get() that looks for get_{key} methods for
-     * by-property delegate handlers.
+     * Save this object to its associated silo, if one exists.
+     *
+     * @param {function} on_success Callback on success
+     * @param {function} on_failure Callback on failure
      */
-    get: function ($super, key) {
-        var fn_name = 'get_'+key;
-        if ('function' === typeof this[fn_name]) {
-            return this[fn_name]($super);
+    save: function (on_success, on_failure) {
+        if (!this.silo) { return; }
+        this.silo.save(this, on_success, on_failure);
+        return this;
+    },
+
+    /**
+     * Handler to be called just before saving this object.
+     *
+     * @param {Decafbad.Silo} silo Silo about to save this object.
+     */
+    beforeSave: function (silo) {
+        this.silo = this;
+        if (!this.get('uuid')) { 
+            this.set('uuid', Math.uuid());
         }
-        return $super(key);
+        if (!this.get('created')) { 
+            this.set('created', (new Date()).getTime());
+        }
+        this.set('modified', (new Date()).getTime());
     },
 
     EOF:null
@@ -165,7 +204,8 @@ Decafbad.Silo = Class.create(/** @lends Decafbad.Silo */{
         ];
         stmts.each(function (stmt) {
             chain.push(function (chain, tx) {
-                tx.executeSql(stmt, [], chain.nextCb(tx), on_failure);
+                // tx.executeSql(stmt, [], chain.nextCb(tx), on_failure);
+                tx.executeSql(stmt, [], chain.nextCb(tx), chain.nextCb(tx));
             });
         });
 
@@ -256,7 +296,10 @@ Decafbad.Silo = Class.create(/** @lends Decafbad.Silo */{
      * @param {object} data Object data / DB row data
      */
     factory: function (data) {
-        return new this.row_class(data);
+        var obj = new this.row_class(data);
+        // Make sure this object knows its silo now.
+        obj.silo = this;
+        return obj;
     },
 
     /**
@@ -269,16 +312,10 @@ Decafbad.Silo = Class.create(/** @lends Decafbad.Silo */{
     save: function (obj, on_success, on_failure) {
         var sql, cols = [], vals = [], is_insert;
 
-        // Make sure this object knows its silo now.
-        obj.silo = this;
-
-        if (!obj.get('uuid')) { 
-            obj.set('uuid', Math.uuid());
+        if ('beforeSave' in obj) {
+            // If the object has a beforeSave handler, call it.
+            obj.beforeSave(this);
         }
-        if (!obj.get('created')) { 
-            obj.set('created', (new Date()).getTime());
-        }
-        obj.set('modified', (new Date()).getTime());
 
         // Gather the table column values from object data.
         Object.keys(obj.table_columns).each(function (col_name) {
@@ -290,7 +327,7 @@ Decafbad.Silo = Class.create(/** @lends Decafbad.Silo */{
         cols.push(obj.blob_column);
         vals.push(obj.toJSON());
         
-        is_insert = (!obj.get('id'));
+        is_insert = (('id' in obj.table_columns) || !obj.get('id'));
         if (is_insert) {
             // If there's no ID, assume that this is a new object.
             sql = [
@@ -319,6 +356,10 @@ Decafbad.Silo = Class.create(/** @lends Decafbad.Silo */{
                     sql, vals,
                     function (tx, rs) {
                         if (is_insert) { obj.set('id', rs.insertId); }
+                        if ('afterSave' in obj) {
+                            // If the object has an afterSave handler, call it.
+                            obj.afterSave(this);
+                        }
                         on_success(obj);
                         return true;
                     }.bind(this),
@@ -380,26 +421,44 @@ Decafbad.Silo = Class.create(/** @lends Decafbad.Silo */{
      */
     _createTable: function (tx, on_success, on_failure) {
         var $this = this,
-            table_columns = $H($this.row_class.prototype.table_columns);
-            schema = [ 
-                "CREATE TABLE IF NOT EXISTS '" + $this.table_name + "' (", [
-                    "'id' INTEGER PRIMARY KEY AUTOINCREMENT",
-                    table_columns.keys().map(function (key) { 
-                        return "'"+key+"' TEXT"; 
-                    }),
-                    "'" + $this.row_class.prototype.blob_column + "' BLOB"
-                ].join(', '),
-                ")"
-            ].flatten().join(' ');
+            row_proto = $this.row_class.prototype,
+            schema_cols = [], schema;
 
+        if ('id' in row_proto.table_columns) {
+            // ID uniqueness taken under direct control.
+            schema_cols.push("'id' TEXT UNIQUE ON CONFLICT REPLACE");
+        } else {
+            // No ID column specified, so assume autoincrement
+            schema_cols.push("'id' INTEGER PRIMARY KEY AUTOINCREMENT");
+        }
+
+        // Create TEXT columns for all others besides id
+        Object.keys(row_proto.table_columns).each(function (column_name) {
+            if ('id' === column_name) { return; }
+            // TODO: Allow different types for extracted columns someday?
+            schema_cols.push("'"+column_name+"' TEXT");
+        }, this);
+
+        // Create a BLOB column for the JSON serialization.
+        schema_cols.push("'" + row_proto.blob_column + "' BLOB");
+
+        // Finally, assemble the complete schema.
+        schema = [
+            "CREATE TABLE IF NOT EXISTS '" + $this.table_name + "' (",
+            schema_cols.flatten().join(','),
+            ")"
+        ].flatten().join(' ');
+
+        // Create the new table from the schema and register it with the silo
+        // meta table.
         tx.executeSql(schema, [], function (tx, rs) {
             tx.executeSql(
-                "INSERT INTO " + $this.meta_table_name +
+                "INSERT OR REPLACE INTO " + $this.meta_table_name +
                 "('table_name', 'version', 'json') VALUES (?,?,?)",
                 [ 
                     $this.table_name, 
-                    $this.row_class.prototype.version,
-                    $H($this.row_class.prototype).toJSON()
+                    row_proto.version,
+                    Object.toJSON(row_proto)
                 ],
                 function (tx) { on_success(tx); },
                 on_failure

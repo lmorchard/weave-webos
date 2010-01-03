@@ -26,10 +26,11 @@
     {"source": "javascripts/Weave/Service/Keys.js"},
     {"source": "javascripts/Weave/Service/CryptoObject.js"},
 
-    {"source": "javascripts/Weave/Service/Types/Types.js"},
-    {"source": "javascripts/Weave/Service/Types/History.js"},
-    {"source": "javascripts/Weave/Service/Types/Bookmarks.js"},
-    {"source": "javascripts/Weave/Service/Types/Tabs.js"},
+    {"source": "javascripts/Weave/Service/Types.js"},
+
+    {"source": "javascripts/Weave/Storage/Storage.js"},
+
+    {"source": "javascripts/Weave/Sync/Sync.js"},
 
     {"source": "javascripts/Weave/TestData.js"},
     {"source": "javascripts/AppGlobals.js"},

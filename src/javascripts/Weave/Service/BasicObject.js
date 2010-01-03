@@ -6,7 +6,7 @@
 /*jslint laxbreak: true */
 /*global Mojo, Weave, Chain, Class, Ajax */
 
-Weave.Service.BasicObject = Class.create(Hash /*Decafbad.SiloObject*/, /** @lends Weave.Service.BasicObject */{
+Weave.Service.BasicObject = Class.create(Decafbad.SiloObject, /** @lends Weave.Service.BasicObject */{
 
     /**
      * Weave basic object
@@ -19,23 +19,35 @@ Weave.Service.BasicObject = Class.create(Hash /*Decafbad.SiloObject*/, /** @lend
      * @augments Decafbad.SiloObject
      * @author l.m.orchard@pobox.com
      */
-    initialize: function ($super, collection, url, data) {
-        if (data) { this.deserialize(data); }
-        this.collection = collection;
-        this.set('url', url);
-    },
-
-    /**
-     * Populate the object with data from a JSON string
-     *
-     * @param {string} json JSON string for deserialization
-     */
-    deserialize: function (json) {
-        this._object = Object.isString(json) ? 
-            json.evalJSON() : Object.clone(json);
+    initialize: function ($super, data, collection, url) {
+        if (Object.isString(data)) {
+            data = json.evalJSON();
+        }
+        $super(data);
         if (Object.isString(this._object.payload)) {
             this._object.payload = this._object.payload.evalJSON();
         }
+        if (url) {
+            this.set('url', url);
+        }
+        this.collection = collection;
+    },
+
+    /**
+     * Handler to be called just before saving this object.
+     *
+     * Since the Weave service has its own notion of modified timestamp,
+     * rename the local versions with a prefix.  Also, Weave uses seconds
+     * and not milliseconds, so adjust for easier comparison.
+     *
+     * @param {Decafbad.Silo} silo Silo about to save this object.
+     */
+    beforeSave: function ($super, silo) {
+        this.silo = this;
+        if (!this.get('local_created')) { 
+            this.set('local_created', (new Date()).getTime() / 1000);
+        }
+        this.set('local_modified', (new Date()).getTime() / 1000);
     },
 
     EOF:null
@@ -75,7 +87,8 @@ Weave.Service.BasicCollection = Class.create(/** @lends Weave.Service.BasicColle
                 if (data.payload) {
                     data.payload = data.payload.evalJSON();
                 }
-                var record = new this._record_type(this, url, data);
+                var record = new this._record_type(data, this, url);
+                record.set('url', url);
                 on_success(this.set(url, record));
             }.bind(this),
             on_failure
