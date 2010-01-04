@@ -155,7 +155,9 @@ Weave.Service.CryptoCollection = Class.create(Weave.Service.BasicCollection, /**
                         function (sub_chain) {
                             // Wait until after decryption to add the record
                             // to the results list and record cache.
-                            objects.push(this.set(url, record));
+                            // TODO: Do we really need to add listed objects to cache?
+                            // objects.push(this.set(url, record));
+                            objects.push(record);
                             sub_chain.next(record);
                         }
                     ]);
