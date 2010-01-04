@@ -1,5 +1,5 @@
 [
-    {"source": "javascripts/dojo/dojo.js"},
+    {"source": "javascripts/vendor/dojo/dojo.js"},
 
     {"source": "javascripts/vendor/Math.uuid.js"},
     {"source": "javascripts/vendor/date-iso8601.js"},
