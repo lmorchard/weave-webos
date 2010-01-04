@@ -67,18 +67,26 @@ Weave.Service.Types.HistoryCollection = Class.create(Weave.Service.CryptoCollect
  * @augments Weave.Service.CryptoObject
  */
 Weave.Service.Types.BookmarkObject = Class.create(Weave.Service.CryptoObject, /** @lends Weave.Service.Types.BookmarkObject */{
-    /*
-    _extract_map: $H({
-        uuid:       'id',
-        s_modified: 'modified',
-        url:        'url',
-        sortindex:  'sortindex',
-        histUri:    '$.payload.cleartext.0.histUri',
-        title:      '$.payload.cleartext.0.title',
-        visits:     '$.payload.cleartext.0.visits'
-    }),
-    */
-
+    version: "0.0.1",
+    property_aliases: {
+        bmkUri: '$.payload.cleartext.0.bmkUri',
+        title:  '$.payload.cleartext.0.title',
+        type:   '$.payload.cleartext.0.type', 
+        visits: '$.payload.cleartext.0.visits',
+        tags:   '$.payload.cleartext.0.tags'
+    },
+    table_columns: {
+        id:             'id',
+        parentid:       'parentid',
+        predecessorid:  'predecessorid',
+        bmkUri:         'bmkUri',
+        title:          'title',
+        type:           'type',
+        sortindex:      ['sortindex', 'NUMERIC'],
+        modified:       ['modified', 'NUMERIC'],
+        local_created:  ['local_created', 'NUMERIC'],
+        local_modified: ['local_modified', 'NUMERIC']
+    },
     EOF:null
 });
 
@@ -103,18 +111,19 @@ Weave.Service.Types.BookmarkCollection = Class.create(Weave.Service.CryptoCollec
  * @augments Weave.Service.CryptoObject
  */
 Weave.Service.Types.TabObject = Class.create(Weave.Service.CryptoObject, /** @lends Weave.Service.Types.TabObject */{
-    /*
-    _extract_map: $H({
-        uuid:       'id',
-        s_modified: 'modified',
-        url:        'url',
-        sortindex:  'sortindex',
-        histUri:    '$.payload.cleartext.0.histUri',
-        title:      '$.payload.cleartext.0.title',
-        visits:     '$.payload.cleartext.0.visits'
-    }),
-    */
-
+    version: "0.0.1",
+    property_aliases: {
+        clientName: '$.payload.cleartext.0.clientName',
+        tabs:       '$.payload.cleartext.0.tabs'
+    },
+    table_columns: {
+        id:             'id',
+        clientName:     'clientName',
+        sortindex:      ['sortindex', 'NUMERIC'],
+        modified:       ['modified', 'NUMERIC'],
+        local_created:  ['local_created', 'NUMERIC'],
+        local_modified: ['local_modified', 'NUMERIC']
+    },
     EOF:null
 });
 
