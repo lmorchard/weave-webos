@@ -48,7 +48,6 @@ Weave.Storage.Silo = Class.create(Decafbad.Silo, /** @lends Weave.Storage.Silo *
  * @augments Weave.Storage.Silo
  */
 Weave.Storage.HistorySilo = Class.create(Weave.Storage.Silo, /** @lends Weave.Storage.HistorySilo */ {
-    db_name: 'weave',
     table_name: 'weave_history',
     row_class: Weave.Service.Types.HistoryObject,
     EOF:null
@@ -61,7 +60,6 @@ Weave.Storage.HistorySilo = Class.create(Weave.Storage.Silo, /** @lends Weave.St
  * @augments Weave.Storage.Silo
  */
 Weave.Storage.BookmarkSilo = Class.create(Weave.Storage.Silo, /** @lends Weave.Storage.BookmarkSilo */ {
-    db_name: 'weave',
     table_name: 'weave_bookmarks',
     row_class: Weave.Service.Types.BookmarkObject,
     EOF:null
@@ -74,7 +72,6 @@ Weave.Storage.BookmarkSilo = Class.create(Weave.Storage.Silo, /** @lends Weave.S
  * @augments Weave.Storage.Silo
  */
 Weave.Storage.TabSilo = Class.create(Weave.Storage.Silo, /** @lends Weave.Storage.TabSilo */ {
-    db_name: 'weave',
     table_name: 'weave_tabs',
     row_class: Weave.Service.Types.TabObject,
     EOF:null
