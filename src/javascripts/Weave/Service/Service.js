@@ -27,9 +27,11 @@ Weave.Service = Class.create(/** @lends Weave.Service */ {
         this.pubkeys   = new Weave.Service.PubKeyCollection(this);
         this.symkeys   = new Weave.Service.SymKeyCollection(this);
 
-        this.history   = new Weave.Service.Types.HistoryCollection(this);
-        this.bookmarks = new Weave.Service.Types.BookmarkCollection(this);
-        this.tabs      = new Weave.Service.Types.TabCollection(this);
+        this.collections = {
+            history: new Weave.Service.Types.HistoryCollection(this),
+            bookmarks: new Weave.Service.Types.BookmarkCollection(this),
+            tabs: new Weave.Service.Types.TabCollection(this)
+        };
 
         /* TODO:
          * passwords
@@ -80,11 +82,13 @@ Weave.Service = Class.create(/** @lends Weave.Service */ {
             },
             function (chain, dates) {
                 // Transform numeric dates into Date objects.
+                /*
                 $H(dates).keys().each(function (name) {
                     var date = new Date();
                     date.setTime(dates[name] * 1000);
                     dates[name] = date;
                 }, this);
+                */
                 return on_success(dates);
             }
         ], this, on_failure).next();

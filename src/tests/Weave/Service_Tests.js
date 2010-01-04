@@ -92,13 +92,6 @@ Weave_Service_Tests.prototype = (function () {
 
                     expected_collections.each(function (name) {
                         var result = collections[name];
-                        Mojo.require(
-                            'object' == typeof result,
-                            "Collection last modified should be a date");
-                        Mojo.require(
-                            'function' == typeof result.getDate,
-                            "Collection last modified should be a date"
-                        );
                         Mojo.Log.error("COLLECTION %j = %j", name, result);
                     }, this);
 
@@ -149,7 +142,7 @@ Weave_Service_Tests.prototype = (function () {
             var chain = new Decafbad.Chain([
                 "_performLogin",
                 function (chain) {
-                    this.service.bookmarks.list(
+                    this.service.collections.bookmarks.list(
                         { 
                             sort: "newest",
                             limit: 5
@@ -167,7 +160,7 @@ Weave_Service_Tests.prototype = (function () {
                     chain.next();
                 },
                 function (chain) {
-                    this.service.bookmarks.list({
+                    this.service.collections.bookmarks.list({
                         sort: 'newest',
                         limit: 5,
                         full: true
@@ -201,7 +194,7 @@ Weave_Service_Tests.prototype = (function () {
             var chain = new Decafbad.Chain([
                 "_performLogin",
                 function (chain) {
-                    this.service.history.list(
+                    this.service.collections.history.list(
                         {
                             "sort": "newest",
                             "limit": 5
@@ -220,7 +213,7 @@ Weave_Service_Tests.prototype = (function () {
 
                         sub_chain.push([
                             function (sub_chain) {
-                                this.service.history.getByID(
+                                this.service.collections.history.getByID(
                                     object_id,
                                     sub_chain.nextCb(),
                                     sub_chain.errorCb('fetching')
