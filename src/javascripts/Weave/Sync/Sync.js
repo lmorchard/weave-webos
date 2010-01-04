@@ -7,192 +7,314 @@
 /*global Mojo, Weave, Chain, Class, Ajax */
 
 /** @namespace */
-Weave.Sync = {
-    running: []
-};
+Weave.Sync = {};
 
-Weave.Sync.BasicSync = Class.create(/** @lends Weave.Sync.BasicSync */ {
+/**
+ * @class
+ */
+Weave.Sync.Manager = Class.create({
 
-    /** Local storage silo class */
-    silo_class: Weave.Storage.HistorySilo,
-    /** Name of the service collection synched */
-    collection_name: 'history',
-    /** Maximum duration into history for sync */
-    max_history: null,
-    /** Number of items to fetch and sync at a time */
-    chunk_size: 100,
+    running: false,
 
     /**
-     * Weave sync engine
      * @constructs
-     * @author l.m.orchard@pobox.com
      */
     initialize: function (options) {
         this.options = Object.extend({
-            "service": null
+            service: null,
+            chunk_size: 50,
+            max_history: 1 * 24 * 60 * 60
         }, options || {});
 
         this.service = this.options.service;
-        this.collection = this.service[this.collection_name];
-        this.silo = new this.silo_class();
+
+        this.silos = {
+            history: new Weave.Storage.HistorySilo(),
+            bookmarks: new Weave.Storage.BookmarkSilo(),
+            tabs: new Weave.Storage.TabSilo()
+        };
+        
+        this.states = new Weave.Sync.StateSilo();
+        this.tasks = new Weave.Sync.TaskSilo();
     },
 
     /**
-     * Open the silo for sync
+     * Open all silos and prepare this sync manager for work.
      *
      * @param {function} on_success Callback on success
      * @param {function} on_failure Callback on failure
      */
     open: function (on_success, on_failure) {
         var chain = new Decafbad.Chain([
-            function (chain) {
-                this.silo.open(chain.nextCb(), on_failure);
-            },
-            on_success
-        ], this, on_failure).start();
+            function (ch) { this.states.open(ch.nextCb(), ch.errorCb()); },
+            function (ch) { this.tasks.open(ch.nextCb(), ch.errorCb()); }
+        ], this, on_failure);
+        Object.keys(this.silos).each(function (name) {
+            chain.push(function (ch) {
+                this.silos[name].open(ch.nextCb(), ch.errorCb());
+            });
+        }, this);
+        chain.push(on_success).start();
+    },
+
+    /**
+     * Reset all silos.
+     *
+     * @param {function} on_success Callback on success
+     * @param {function} on_failure Callback on failure
+     */
+    resetAll: function (on_success, on_failure) {
+        var chain = new Decafbad.Chain([
+            function (ch) { this.states.resetAll(ch.nextCb(), ch.errorCb()); },
+            function (ch) { this.tasks.resetAll(ch.nextCb(), ch.errorCb()); }
+        ], this, on_failure);
+        Object.keys(this.silos).each(function (name) {
+            chain.push(function (ch) {
+                this.silos[name].resetAll(ch.nextCb(), ch.errorCb());
+            });
+        }, this);
+        chain.push(on_success).start();
     },
 
     /**
      *
-     * @param {function} on_progress Callback on progress
-     * @param {function} on_success  Callback on success
-     * @param {function} on_failure  Callback on failure
      */
-    startSync: function (on_progress, on_success, on_failure) {
-        var $this = this;
+    on_progress: function (msg) {
+        dojo.publish('/weave/sync/progress', [ msg ]);
+    },
+
+    /**
+     * Check a collection for items in need of sync, queue up tasks if
+     * necessary.
+     *
+     * @param {string}   collection_name Collection to check
+     * @param {function} on_success      Callback on success
+     * @param {function} on_failure      Callback on failure
+     */
+    check: function (collection_name, on_success, on_failure) {
+        var g = {};
+
         var chain = new Decafbad.Chain([
             function (ch) {
-                // Look for silo last modified timestamp.
-                this.silo.getLastModified(ch.nextCb(), ch.errorCb());
+                // Try to find the sync state for this collection.
+                this.states.find(collection_name, ch.nextCb(), ch.errorCb());
             },
-            function (ch, silo_last_mod) {
-                if (silo_last_mod) {
-                    // Got a last modified, so pass it along.
-                    on_progress("Seeking from silo last modified");
-                    return ch.next(silo_last_mod);
+            function (ch, state) {
+                // If no state found, create a new one.
+                g.state = (state) ? state : 
+                    this.states.factory({ id: collection_name });
+                // Look for collections to get a last modified date.
+                this.service.listAllCollections(ch.nextCb(), ch.errorCb());
+            },
+            function (ch, collections) {
+                // Grab the sync last-checked and collection last-modified
+                g.last_checked = g.state.get('last_checked');
+                g.last_modified = collections[collection_name];
+
+                if (g.last_checked && g.last_checked < g.last_modified) {
+                    // There was a last-checked time and the collection has
+                    // been modified since then.
+                    this.on_progress("Seeking from last checked");
+                    return ch.next(g.last_checked);
                 }
-                if (!this.max_history) {
-                    // No max history, so need to get everything.
-                    on_progress("Seeking all items");
+                if (!this.options.max_history) {
+                    // There's no max history period, so sync everything.
+                    this.on_progress("Seeking all items");
                     return ch.next(null);
                 }
-                // Look for the last modified of the service in order
-                // to derive newer than timestamp from max history.
-                this.service.listAllCollections(
-                    function (data) {
-                        var service_last_mod = 
-                            data[this.collection_name].getTime() / 1000;
-                        var newer_than = service_last_mod - this.max_history;
-                        on_progress("Seeking history newer than " + newer_than);
-                        ch.next(newer_than);
-                    }.bind(this),
-                    ch.errorCb()
-                );
+                // There is a max history period, so just look for everything
+                // within that max period back from last modified.
+                this.on_progress("Seeking max history items");
+                ch.next(g.last_modified - this.options.max_history);
             },
             function (ch, newer_than) {
-                this.collection.list({
+                // Look for IDs in order of importance, newer than the time
+                // derived in the previous step.
+                this.service.collections[collection_name].list({
                     sort: 'index', newer: newer_than
                 }, ch.nextCb(), ch.errorCb());
             },
             function (ch, need_ids) {
-                on_progress("Found " + need_ids.length + " items to sync.");
+                this.on_progress("Found " + need_ids.length + " " + 
+                    collection_name + " items to sync.");
 
-                var chunks = [];
-                for (var i=0, l=need_ids.length; i<l; i+=this.chunk_size) {
-                    chunks.push(need_ids.slice(i, i+this.chunk_size));
+                // Divide the fetched IDs into chunks.
+                var chunk_size = this.options.chunk_size,
+                    chunks = [];
+                for (var i=0, l=need_ids.length; i<l; i+=chunk_size) {
+                    chunks.push( need_ids.slice(i, i+chunk_size) );
                 }
 
-                var total_chunks = chunks.length;
-                on_progress("Prepared " + total_chunks + " chunks to sync.");
+                // Queue up the generation of a batch of tasks for each 
+                // of the chunks.
+                var s_ch = new Decafbad.Chain([], this, ch.errorCb()),
+                    batch_uuid = Math.uuid(),
+                    total_chunks = chunks.length,
+                    created = (new Date()).getTime() / 1000;
 
-                (function () {
-                    var cb = arguments.callee.bind(this),
-                        chunk = chunks.shift(),
-                        perc = ((total_chunks-chunks.length)/total_chunks) * 100;
+                chunks.each(function (chunk, idx) {
+                    s_ch.push(function (s_ch) {
+                        this.tasks.factory({
+                            batch_uuid: batch_uuid,
+                            batch_index: idx,
+                            batch_total: total_chunks,
+                            batch_created: created,
+                            collection_name: collection_name,
+                            chunk: chunk,
+                            processed: null
+                        }).save(s_ch.nextCb(), s_ch.errorCb());
+                    });
+                }, this);
 
-                    // DEBUG: Bail at 18%
-                    //if (perc > 18) { return ch.next(); }
-                    //Mojo.Log.logJSON(chunk);
-
-                    if (!chunk) { return ch.next(); }
-
-                    this.collection.list(
-                        { full: true, ids: chunk },
-                        function (results) {
-                            on_progress("Downloaded " + results.length + " items");
-
-                            this.silo.save(
-                                results,
-                                function (saved) {
-                                    on_progress("Saved " + saved.length + " items");
-                                    on_progress("Completed " + Math.ceil(perc) + "%");
-                                    setTimeout(cb, 1);
-                                },
-                                ch.errorCb()
-                            );
-                        }.bind(this),
-                        ch.errorCb()
-                    );
-
-                }.bind(this))();
-
-                //ch.next();
+                // Fire up the task generation.
+                s_ch.push(ch.nextCb()).start();
             },
-            on_success
-        ], this).start();
+            function (ch) {
+                // All done!
+                on_success();
+            }
+        ], this, on_failure).start();
     },
 
-    EOF:null // I hate trailing comma errors
-});
+    /**
+     * Fetch and process one sync task.
+     *
+     * TODO: Extract this into a general task queue utility?
+     * TODO: Explode this out into per-collection classes for customization?
+     *
+     * @param {function} on_success Callback on success
+     * @param {function} on_failure Callback on failure
+     */
+    step: function (on_success, on_failure) {
+        var g = {};
+        var ch = new Decafbad.Chain([
+            function (ch) {
+                // Look for the newest unprocessed task.
+                // NOTE: That means this task queue is LIFO!
+                this.tasks.query(
+                    [ 'WHERE processed IS null', 
+                        'ORDER BY batch_created DESC, batch_index ASC LIMIT 1' ], [],
+                    ch.nextCb(), ch.errorCb()
+                );
+            },
+            function (ch, results) {
+                // If there are no tasks fetched, yield queue empty.
+                if (!results.length) { return on_success(false); }
 
-/**
- *
- */
-Weave.Sync.SyncState = Class.create(/** @lends Weave.Sync.SyncState */{
+                // Get the task, extract the chunk and collection name.
+                g.task = results.shift();
+                g.chunk = g.task.get('chunk');
+                g.collection_name = g.task.get('collection_name');
+
+                // Now, grab full items for the chunk.
+                this.service.collections[g.collection_name].list({
+                    full: true, ids: g.chunk
+                }, ch.nextCb(), ch.errorCb());
+            },
+            function (ch, results) {
+                // Got the full items, now save them to the silo.
+                this.on_progress("Downloaded " + results.length + " " + 
+                    g.collection_name + " items");
+                this.silos[g.collection_name].save(
+                    results, ch.nextCb(), ch.errorCb()
+                );
+            },
+            function (ch, saved) {
+                this.on_progress("Saved " + saved.length + " " + 
+                    g.collection_name + " items");
+
+                // Report on batch progress.
+                var uuid  = g.task.get('batch_uuid'),
+                    index = g.task.get('batch_index'),
+                    total = g.task.get('batch_total');
+                this.on_progress("Processed " + (index+1) + "/" + total + 
+                    " (" + uuid + ")");
+
+                // The task is complete, so mark it processed.
+                g.task.set('processed', (new Date()).getTime());
+                g.task.save(ch.nextCb(), ch.errorCb());
+            },
+            function (ch) {
+                on_success(true);
+            }
+        ], this, on_failure).start();
+    },
 
     /**
-     *
-     * @constructs
-     * @author l.m.orchard@pobox.com
-     *
-     * @param {object} options Silo options
+     * Start task queue running.
      */
-    initialize: function (options) {
-        this.options = Object.extend({
+    start: function () {
+        this.running = true;
+        this._runLoop();
+    },
 
-        }, options || {});
+    /**
+     * Stop the task queue after completion of the next task, if any.
+     */
+    stop: function () {
+        this.running = false;
+    },
+
+    /**
+     * Main task processing run-loop, calls this.step() until exhausted. Calls
+     * itself via setTimeout() while this.running is true.
+     */
+    _runLoop: function () {
+        this.step(
+            function (more) { 
+                if (!more) {
+                    return dojo.publish('/weave/sync/finished');
+                } else if (!this.running) {
+                    return dojo.publish('/weave/sync/stopped');
+                } else {
+                    setTimeout(this._runLoop.bind(this), 0.1);
+                    return dojo.publish('/weave/sync/running');
+                }
+            }.bind(this),
+            function () { 
+                return dojo.publish('/weave/sync/failed');
+            }.bind(this)
+        );
     },
 
     EOF:null
 });
 
 /**
- * @class
- * @augments Weave.Sync.BasicSync
+ * Silo of sync state recordkeeping objects.
  */
-Weave.Sync.HistorySync = Class.create(Weave.Sync.BasicSync, /** @lends Weave.Sync.HistorySync */ {
-    silo_class: Weave.Storage.HistorySilo,
-    collection_name: 'history',
-    max_history: null, //3 * 24 * 60 * 60,
-    EOF: null
+Weave.Sync.StateSilo = Class.create(Decafbad.Silo, 
+    /** @lends Weave.Sync.StateSilo */ {
+    table_name: 'weave_sync_state',
+    row_class: Weave.Sync.State = Class.create(Decafbad.SiloObject, 
+        /** @lends Weave.Sync.State */ {
+        table_columns: {
+            id: 'id',
+            last_checked: ['last_checked', 'NUMERIC'],
+            created: ['created', 'NUMERIC'],
+            modified: ['modified', 'NUMERIC']
+        }
+    })
 });
 
 /**
- * @class
- * @augments Weave.Sync.BasicSync
+ * Silo of pending sync tasks.
  */
-Weave.Sync.BookmarkSync = Class.create(Weave.Sync.BasicSync, /** @lends Weave.Sync.BookmarkSync */ {
-    silo_class: Weave.Storage.BookmarkSilo,
-    collection_name: 'bookmarks',
-    EOF: null
-});
-
-/**
- * @class
- * @augments Weave.Sync.BasicSync
- */
-Weave.Sync.TabSync = Class.create(Weave.Sync.BasicSync, /** @lends Weave.Sync.TabSync */ {
-    silo_class: Weave.Storage.TabSilo,
-    collection_name: 'tabs',
-    EOF: null
+Weave.Sync.TaskSilo = Class.create(Decafbad.Silo, 
+    /** @lends Weave.Sync.TaskSilo */ {
+    table_name: 'weave_sync_tasks',
+    row_class: Weave.Sync.Task = Class.create(Decafbad.SiloObject, 
+        /** @lends Weave.Sync.Task */ {
+        version: '0.0.1',         
+        table_columns: {
+            collection_name: 'collection_name',
+            batch_uuid: 'batch_uuid',
+            batch_index:   ['batch_index', 'NUMERIC'],
+            batch_total:   ['batch_total', 'NUMERIC'],
+            batch_created: ['batch_created', 'NUMERIC'],
+            processed:     ['processed', 'NUMERIC'],
+            created:       ['created', 'NUMERIC'],
+            modified:      ['modified', 'NUMERIC']
+        }
+    })
 });
